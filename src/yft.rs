@@ -13,14 +13,14 @@ between the quantities (i - 1)2^J + 1 and i* 2^J */
 
 pub struct YFT {
     //position of successor of subtree in elementarray
-    lss_top: [DataType; 256],
+    lss_top: Vec<DataType>,
     //position of successor of subtree, 0 if None//TODO kommentar erläutern TODO  generischer
     lss_leaf: FxHashMap<DataType, TreeLeaf>,
     lss_branch: Vec<FxHashMap<DataType, TreeBranch>>,
     //TODO rustc-hash? perfekter hash?
     start_level: usize,
     //== lss leaf level
-    _last_level_len: usize,
+    last_level_len: usize,
     //number of levels that are pooled into one level at the top of the xft
     elements: Vec<DataType>, //Original input
 }
@@ -33,14 +33,14 @@ impl YFT {
         let levels = BIT_LENGTH - start_level - last_level_len;
 
         //initialise lss_top
-        let mut lss_top: [DataType; 256] = [0; 256];
+        let mut lss_top = vec![0;2usize.pow(last_level_len as u32)];
         if let Some(mem) = mem.as_mut() { mem.log("lss_branch top declared") }
         for (pos, value) in elements.iter().enumerate() {
             //check array is sorted
             debug_assert!(pos == 0 || value >= &elements[pos - 1]);
             //check value not to big
             debug_assert!(pos >> BIT_LENGTH == 0);
-            let mut lss_top_pos = YFT::lss_top_position(value);
+            let mut lss_top_pos = YFT::lss_top_position(value, last_level_len);
 //            println!("lss_top_pos {}, value {}, {}", lss_top_pos, value, value >> 56);
             //set successors
             while lss_top_pos > 0 && lss_top[lss_top_pos - 1] == 0 {
@@ -108,7 +108,7 @@ impl YFT {
         }
 
         //return
-        YFT { lss_top, lss_leaf, lss_branch: lss_branch, start_level: start_level, _last_level_len: last_level_len, elements }
+        YFT { lss_top, lss_leaf, lss_branch: lss_branch, start_level: start_level, last_level_len: last_level_len, elements }
     }
 
     ///prints number of elements + relative fill level per lss level
@@ -125,7 +125,7 @@ impl YFT {
     }
 
     fn calc_start_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize) -> usize {
-        let mut range = (min_start_level, max_lss_level - 1); //TODO auch in Parameter
+        let mut range = (min_start_level, max_lss_level - 1);
         while range.0 < range.1 {
             let candidate = (range.0 + range.1) / 2;
             if YFT::calc_nodes_in_level(candidate, elements) / 90 >= elements.len() / 100 { //TODO testen was hier gut ist, als Parameter?
@@ -137,7 +137,7 @@ impl YFT {
         range.1 as usize
     }
 
-    fn calc_lss_top_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize) -> usize { //TODO s.o.
+    fn calc_lss_top_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize) -> usize {
         let mut range = (min_start_level + 1, max_lss_level);
         while range.0 < range.1 {
             let candidate = (range.0 + range.1) / 2;
@@ -147,7 +147,7 @@ impl YFT {
                 range = (range.0, candidate)
             }
         }
-        range.1 as usize
+        if range.1 > 20  {range.1 as usize} else {20}
     }
 
     ///count how many nodes are in one level
@@ -165,8 +165,8 @@ impl YFT {
         count
     }
 
-    fn lss_top_position(value: &DataType) -> DataType {
-        value >> (BIT_LENGTH - 8)
+    fn lss_top_position(value: &DataType, lss_top_length: usize) -> usize {
+        value >> (BIT_LENGTH - lss_top_length)
     }
 
     pub fn contains(&self, position: DataType) -> bool {
@@ -255,7 +255,7 @@ impl YFT {
     ///can only be used, if there is no existing node below
     fn predec_lss_top(&self, position: DataType) -> Option<DataType> {
         unsafe {
-            let pos = *self.lss_top.get_unchecked(YFT::lss_top_position(&position));
+            let pos = *self.lss_top.get_unchecked(YFT::lss_top_position(&position, self.last_level_len));
             if pos == 0 {
                 if self.elements.len() > 0 && *self.elements.get_unchecked(self.elements.len() - 1) < position {
                     return self.element_from_array(position, self.elements.len() - 1);
@@ -275,7 +275,7 @@ impl YFT {
         //test next value greater than search one
         debug_assert!(index + 1 >= self.elements.len() || if let Some(successor) = self.elements.get(index + 1) { successor >= &position } else { true });
         //test value smaller than searched one
-        debug_assert!(if let Some(predecessor) = self.elements.get(index) { predecessor < &position } else { true });
+        debug_assert!(if let Some(predecessor) = self.elements.get(index) {dbg!(predecessor, &position); predecessor < &position } else { true });
         debug_assert!(index < self.elements.len());
         unsafe {
             return Some(*self.elements.get_unchecked(index));

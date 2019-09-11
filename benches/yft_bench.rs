@@ -14,15 +14,15 @@ use yft::YFT;
 
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    let values = yft::nmbrsrc::get_normal_dist(10000000);
-    let yft = YFT::new(values, &mut None);
+    let values = yft::nmbrsrc::get_uniform_dist(10000000);
+    let yft = YFT::new(values, &mut None, 8, 10);
 //    let query = 42;
 //    c.bench_with_input(BenchmarkId::new("input_example", query), &query, |b, &s| {
 //        b.iter(|| yft.predecessor(s));
 //    });
 
     let mut group = c.benchmark_group("query");
-    for s in yft::nmbrsrc::get_normal_dist(5).iter() {
+    for s in yft::nmbrsrc::get_uniform_dist(5).iter() {
         group.throughput(Throughput::Bytes(*s as u64));
 //        group.sample_size(10);
         group.measurement_time(Duration::from_millis(100));
@@ -37,6 +37,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     group.finish();
 }
 
+///binary search predecessor
 fn pred(element_list: &Vec<usize>, element: usize) -> Option<usize> {
     let mut l = 0;
     let mut r = element_list.len() - 1;

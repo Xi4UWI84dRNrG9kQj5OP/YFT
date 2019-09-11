@@ -36,7 +36,7 @@ mod tests {
     #[test]
     fn test() { //TODO abdeckende test, statt dieser eher zufälligen
         let mut values = vec![1, 2, 3, 100, 1000, 10000, 100000, 1000000, 10000000, 1099511627774];
-        let mut yft = YFT::new(values, &mut None);
+        let mut yft = YFT::new(values, &mut None, 10, 8);
         assert_eq!(yft.predecessor(0), None);
         assert_eq!(yft.predecessor(1), None);
         assert_eq!(yft.predecessor(2), Some(1));
@@ -51,7 +51,7 @@ mod tests {
         assert_eq!(yft.predecessor(1099511627774), Some(10000000));
         assert_eq!(yft.predecessor(1099511627775), Some(1099511627774));
         values = vec![1099511627, 1099511627775];
-        yft = YFT::new(values, &mut None);
+        yft = YFT::new(values, &mut None, 10, 8);
         assert_eq!(yft.predecessor(0), None);
         assert_eq!(yft.predecessor(1), None);
         assert_eq!(yft.predecessor(2), None);
@@ -62,7 +62,7 @@ mod tests {
         assert_eq!(yft.predecessor(1099511627774), Some(1099511627));
         assert_eq!(yft.predecessor(1099511627775), Some(1099511627));
         values = vec![1844, 18446744073];
-        yft = YFT::new(values, &mut None);
+        yft = YFT::new(values, &mut None, 10, 8);
         assert_eq!(yft.predecessor(0), None);
         assert_eq!(yft.predecessor(1), None);
         assert_eq!(yft.predecessor(2), None);
