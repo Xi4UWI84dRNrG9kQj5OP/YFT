@@ -118,10 +118,10 @@ impl YFT {
         println!("Startlevel = {}, normal Levels = {}, Top Levels = {}", self.start_level, self.lss_branch.len() + 1, self.last_level_len);
         let mut len = self.lss_leaf.len();
         let mut count = len;
-        println!("Anzahl Elemente in Ebene 0: {} ({}*Eingabegröße, {}*Levelkapazität)", len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - 0) as f32));
-        for level in 1..self.lss_branch.len() {
+        println!("Anzahl Elemente in Ebene 0: {} ({}*Eingabegröße, {}*Levelkapazität)", len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((40 - self.start_level) as f32));
+        for level in 1..self.lss_branch.len() + 1 {
             len = self.lss_branch[level - 1].len();
-            println!("Anzahl Elemente in Ebene {}: {} ({}*Eingabegröße, {}*Levelkapazität)", level, len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - 0) as f32));
+            println!("Anzahl Elemente in Ebene {}: {} ({}*Eingabegröße, {}*Levelkapazität)", level, len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((40 - self.last_level_len - level) as f32));
             count += self.lss_branch[level - 1].len();
         }
         println!("Anzahl Elemente Insgesamt: {}", count);

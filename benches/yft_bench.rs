@@ -12,7 +12,8 @@ use std::time::Duration;
 use uint::u40;
 
 pub fn criterion_benchmark(c: &mut Criterion) { //TODO das muss auch mit parametern gehen!
-    let values = yft::nmbrsrc::get_uniform_dist(10000000);
+//    let values = yft::nmbrsrc::get_uniform_dist(10000000);
+    let values = yft::nmbrsrc::load("C:\\tmp\\i.dat").unwrap();
 //    let yft = yft::yft40::YFT::new(values.into_iter().map(|v| u40::from(v)).collect(), &mut None, 8, 10);
     let yft = yft::yft::YFT::new(values, &mut None, 8, 10);
 

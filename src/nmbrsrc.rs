@@ -37,7 +37,7 @@ pub fn get_uniform_dist(length: usize) -> Vec<usize> {
 ///If File exists, values will be loaded & written sorted with new values. In this case.
 ///Else a new File will be created
 pub fn save(values: &Vec<usize>, path: &str) -> std::io::Result<()> {
-    let value_string = if let Some(mut old_values) = load(path) {
+    let value_string = if let Some(mut old_values) = load(path) { //TODO load schmeisst Err vorbei
         old_values.append(&mut values.clone());
         old_values.sort(); //TODO theoretisch könnte man hier zeit sparen, wenn man ausnutzt, dass beide vektoren sortiert sind
         format!("{:?}", old_values)
