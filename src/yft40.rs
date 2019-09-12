@@ -27,12 +27,12 @@ pub struct YFT {
 impl YFT {
     ///elements must be sorted ascending!
     pub fn new(elements: Vec<DataType>, mem: &mut Option<Memlog>, min_start_level: usize, max_lss_level: usize) -> YFT {
-        let start_level = YFT::calc_start_level(&elements, min_start_level, max_lss_level);
-        let last_level_len = 40 - YFT::calc_lss_top_level(&elements, min_start_level, max_lss_level);
+        let start_level = YFT::calc_start_level(&elements, min_start_level, 40 - max_lss_level);
+        let last_level_len = 40 - YFT::calc_lss_top_level(&elements, min_start_level, 40 - max_lss_level);
         let levels = BIT_LENGTH - start_level - last_level_len;
 
         //initialise lss_top
-        let mut lss_top = vec![u40::from(0);2usize.pow(last_level_len as u32)];
+        let mut lss_top = vec![u40::from(0); 2usize.pow(last_level_len as u32)];
         if let Some(mem) = mem.as_mut() { mem.log("lss_branch top declared") }
         for (pos, value) in elements.iter().enumerate() {
             //check array is sorted
@@ -83,7 +83,7 @@ impl YFT {
             //iterate through levels, until parent exists
             for i in 1..lss_branch.len() {
                 //path of new parent
-                let path = calc_path(*value, i , start_level);
+                let path = calc_path(*value, i, start_level);
                 let is_left_child = is_left_child(child);
                 lss_branch[i - 1].entry(path).and_modify(|parent: &mut TreeBranch| {
                     //case there is a parent -> add new child to parent and then stop updating parents
@@ -115,12 +115,13 @@ impl YFT {
 
     ///prints number of elements + relative fill level per lss level
     pub fn print_stats(&self) {
+        println!("Startlevel = {}, normal Levels = {}, Top Levels = {}", self.start_level, self.lss_branch.len() + 1, self.last_level_len);
         let mut len = self.lss_leaf.len();
         let mut count = len;
-        println!("Anzahl Elemente in Ebene 0: {} ({}*Eingabegröße, {}*Levelkapazität)", len, len / self.elements.len(), len / 2usize.pow((BIT_LENGTH - 0) as u32));
+        println!("Anzahl Elemente in Ebene 0: {} ({}*Eingabegröße, {}*Levelkapazität)", len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - 0) as f32));
         for level in 1..self.lss_branch.len() {
             len = self.lss_branch[level - 1].len();
-            println!("Anzahl Elemente in Ebene {}: {} ({}*Eingabegröße, {}*Levelkapazität)", level, len, len / self.elements.len(), len / 2usize.pow((BIT_LENGTH - 0) as u32));
+            println!("Anzahl Elemente in Ebene {}: {} ({}*Eingabegröße, {}*Levelkapazität)", level, len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - 0) as f32));
             count += self.lss_branch[level - 1].len();
         }
         println!("Anzahl Elemente Insgesamt: {}", count);
@@ -149,7 +150,7 @@ impl YFT {
                 range = (range.0, candidate)
             }
         }
-        if range.1 > 20  {range.1 as usize} else {20}
+        if range.1 > 20 { range.1 as usize } else { 20 }
     }
 
     ///count how many nodes are in one level

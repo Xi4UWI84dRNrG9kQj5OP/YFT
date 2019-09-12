@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate criterion;
 extern crate yft;
+extern crate uint;
 
 //external use
 use criterion::Criterion;
@@ -8,18 +9,12 @@ use criterion::Criterion;
 use criterion::BenchmarkId;
 use criterion::Throughput;
 use std::time::Duration;
+use uint::u40;
 
-//internal use
-use yft::YFT;
-
-
-pub fn criterion_benchmark(c: &mut Criterion) {
+pub fn criterion_benchmark(c: &mut Criterion) { //TODO das muss auch mit parametern gehen!
     let values = yft::nmbrsrc::get_uniform_dist(10000000);
-    let yft = YFT::new(values, &mut None, 8, 10);
-//    let query = 42;
-//    c.bench_with_input(BenchmarkId::new("input_example", query), &query, |b, &s| {
-//        b.iter(|| yft.predecessor(s));
-//    });
+//    let yft = yft::yft40::YFT::new(values.into_iter().map(|v| u40::from(v)).collect(), &mut None, 8, 10);
+    let yft = yft::yft::YFT::new(values, &mut None, 8, 10);
 
     let mut group = c.benchmark_group("query");
     for s in yft::nmbrsrc::get_uniform_dist(5).iter() {
@@ -28,6 +23,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         group.measurement_time(Duration::from_millis(100));
         group.warm_up_time(Duration::from_millis(100));
         group.bench_with_input(BenchmarkId::from_parameter(s), s, |b, &s| {
+//            b.iter(|| yft.predecessor(u40::from(s)));
             b.iter(|| yft.predecessor(s));
         });
 //        group.bench_with_input(BenchmarkId::from_parameter(s), s, |b, &s| {

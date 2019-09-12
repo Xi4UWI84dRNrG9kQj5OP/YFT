@@ -13,6 +13,7 @@ pub use yft::YFT;
 //use structopt::StructOpt;
 
 pub mod yft;
+pub mod yft40;
 pub mod nmbrsrc;
 pub mod memlog;
 
