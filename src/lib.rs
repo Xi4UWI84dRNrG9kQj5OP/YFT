@@ -8,26 +8,15 @@ extern crate stats_alloc;
 extern crate gnuplot;
 
 
-pub use yft::YFT;
+pub use yft64::YFT;
 //use std::path::PathBuf;
 //use structopt::StructOpt;
 
-pub mod yft;
+pub mod yft64;
 pub mod yft40;
+pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod memlog;
-
-
-pub trait PredecessorSet<T> {
-    fn insert(&mut self, element: T);
-    fn delete(&mut self, element: T);
-    fn predecessor(&self, number: T) -> Option<T>;
-    fn sucessor(&self, number: T) -> Option<T>;
-    // Optional
-    fn minimum(&self) -> Option<T>;
-    fn maximum(&self) -> Option<T>;
-    fn contains(&self, number: T) -> bool;
-}
 
 #[cfg(test)]
 mod tests {

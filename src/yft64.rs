@@ -2,6 +2,7 @@ extern crate rustc_hash;
 
 use memlog::Memlog;
 use self::rustc_hash::FxHashMap;
+use predecessor_set::PredecessorSet;
 
 pub type DataType = usize;
 
@@ -370,17 +371,6 @@ fn is_left_child(path: DataType) -> bool {
     path % 2 == 0
 }
 
-pub trait PredecessorSet<T> {
-    fn insert(&mut self, element: T);
-    fn delete(&mut self, element: T);
-    fn predecessor(&self, number: T) -> Option<T>;
-    fn sucessor(&self, number: T) -> Option<T>;
-    // Optional
-    fn minimum(&self) -> Option<T>;
-    fn maximum(&self) -> Option<T>;
-    fn contains(&self, number: T) -> bool;
-}
-
 impl PredecessorSet<DataType> for YFT {
     ///static YFT can not insert
     fn insert(&mut self, _element: DataType) {
@@ -394,7 +384,7 @@ impl PredecessorSet<DataType> for YFT {
         self.predecessor(number)
     }
     ///not implemented yet
-    fn sucessor(&self, _number: DataType) -> Option<DataType> {
+    fn successor(&self, _number: DataType) -> Option<DataType> {
         panic!("sucessor not implemented yet")
     }
     fn minimum(&self) -> Option<DataType> {

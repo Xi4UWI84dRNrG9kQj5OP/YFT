@@ -25,7 +25,7 @@ pub fn criterion_benchmark(c: &mut Criterion) { //TODO das muss auch mit paramet
 }
 
 fn bench_yft(c: &mut Criterion<WallTime>, values: Vec<usize>, queries: Vec<usize>) {
-    let yft = yft::yft::YFT::new(values, &mut None, 8, 10);
+    let yft = yft::yft64::YFT::new(values, &mut None, 8, 10);
     let mut group = c.benchmark_group("query");
     for s in queries.iter() {
         group.throughput(Throughput::Bytes(*s as u64));
