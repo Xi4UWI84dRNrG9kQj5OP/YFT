@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Ich <Johannes.Neumann@udo.edu>"]
 
 [dependencies]
-stats_alloc = "0.1.8"
+stats_alloc =  { path = "../stats_alloc"}#"0.1.8"
 rand = "0.7.0"
 rand_distr = "0.2.1"
 structopt = "0.2.18"

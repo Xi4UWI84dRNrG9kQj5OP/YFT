@@ -34,7 +34,7 @@ impl<'a> Memlog<'a> {
     /// logs the actual memory usage with the given info to the outline.
     pub fn print(&self, info: &str) {
         let stats = self.reg.change();
-        println!("Memory usage at {}: {:#?}mb", info, (stats.bytes_allocated - stats.bytes_deallocated as usize) / 1000000);
+        println!("Memory usage at {}: {:#?}mb, max usage was: {}mb", info, (stats.bytes_allocated - stats.bytes_deallocated as usize) / 1000000, stats.bytes_max_used as usize / 1000000);
     }
 
     /// logs the actual memory usage with the given info. If no File is set it will be printed to the outline.
@@ -52,17 +52,17 @@ impl<'a> Memlog<'a> {
     }
 
     ///file have to be read, cause els memlogs would have to stay in RAM -> would be useless
-    pub fn plot(&mut self, input_file: String, plot_title: &str){
+    pub fn plot(&mut self, input_file: String, plot_title: &str) {
         let input = File::open(input_file).unwrap();
         let file_reader = BufReader::new(&input);
-        let mut values:Vec<u64> = vec![];
+        let mut values: Vec<u64> = vec![];
         for l in file_reader.lines() {
             let line = l.unwrap();
             let v = line.split(";").next().unwrap();
             values.push(v.parse::<u64>().unwrap())
         }
 
-        let x :Vec<usize> = (0 .. values.len() - 1).collect();
+        let x: Vec<usize> = (0..values.len() - 1).collect();
 
         let mut fg = Figure::new();
         fg.axes2d()
@@ -71,7 +71,7 @@ impl<'a> Memlog<'a> {
             .set_x_label("x", &[])
             .set_y_label("y", &[])
             .lines(
-                &x ,
+                &x,
                 &values,
                 &[Caption(plot_title)],
             );

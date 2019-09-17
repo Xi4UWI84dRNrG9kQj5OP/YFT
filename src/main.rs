@@ -95,7 +95,7 @@ fn main() {
                 match distribution {
                     Distribution::Normal { length, mean, deviation } => {
                         nmbrsrc::get_normal_dist(length, mean as f64, deviation as f64)
-                    },
+                    }
                     Distribution::Uniform { length } => {
                         nmbrsrc::get_uniform_dist(length)
                     }

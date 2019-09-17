@@ -15,22 +15,23 @@ between the quantities (i - 1)2^J + 1 and i* 2^J */
 pub struct YFT {
     //position of successor of subtree in elementarray
     lss_top: Vec<DataType>,
-    //position of successor of subtree, 0 if None//TODO kommentar erläutern TODO  generischer
+    //position of successor of subtree, 0 if None//TODO kommentar erläutern
     lss_leaf: FxHashMap<DataType, TreeLeaf>,
     lss_branch: Vec<FxHashMap<DataType, TreeBranch>>,
     //TODO rustc-hash? perfekter hash?
-    start_level: usize,
     //== lss leaf level
-    last_level_len: usize,
+    start_level: usize,
     //number of levels that are pooled into one level at the top of the xft
-    elements: Vec<DataType>, //Original input
+    last_level_len: usize,
+    //Original input
+    elements: Vec<DataType>,
 }
 
 impl YFT {
     ///elements must be sorted ascending!
     pub fn new(elements: Vec<DataType>, mem: &mut Option<Memlog>, min_start_level: usize, max_lss_level: usize) -> YFT {
-        let start_level = YFT::calc_start_level(&elements, min_start_level, 40 - max_lss_level);
-        let last_level_len = 40 - YFT::calc_lss_top_level(&elements, min_start_level, 40 - max_lss_level);
+        let start_level = YFT::calc_start_level(&elements, min_start_level, BIT_LENGTH - max_lss_level);
+        let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, min_start_level, BIT_LENGTH - max_lss_level);
         let levels = BIT_LENGTH - start_level - last_level_len;
 
         //initialise lss_top
@@ -40,7 +41,7 @@ impl YFT {
             //check array is sorted
             debug_assert!(pos == 0 || value >= &elements[pos - 1]);
             //check value not to big
-            debug_assert!(pos >> BIT_LENGTH == 0);
+//            debug_assert!(pos >> BIT_LENGTH == 0);
             let mut lss_top_pos = YFT::lss_top_position(value, last_level_len);
 //            println!("lss_top_pos {}, value {}, {}", lss_top_pos, value, value >> 56);
             //set successors
@@ -117,10 +118,10 @@ impl YFT {
         println!("Startlevel = {}, normal Levels = {}, Top Levels = {}", self.start_level, self.lss_branch.len() + 1, self.last_level_len);
         let mut len = self.lss_leaf.len();
         let mut count = len;
-        println!("Anzahl Elemente in Ebene 0: {} ({}*Eingabegröße, {}*Levelkapazität)", len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((40 - self.start_level) as f32));
+        println!("Anzahl Elemente in Ebene 0: {} ({}*Eingabegröße, {}*Levelkapazität)", len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.start_level) as f32));
         for level in 1..self.lss_branch.len() + 1 {
             len = self.lss_branch[level - 1].len();
-            println!("Anzahl Elemente in Ebene {}: {} ({}*Eingabegröße, {}*Levelkapazität)", level, len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((40 - self.last_level_len - level) as f32));
+            println!("Anzahl Elemente in Ebene {}: {} ({}*Eingabegröße, {}*Levelkapazität)", level, len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.last_level_len - level) as f32));
             count += self.lss_branch[level - 1].len();
         }
         println!("Anzahl Elemente Insgesamt: {}", count);
@@ -289,37 +290,6 @@ impl YFT {
             index += 1;
         }
         return if index == 0 { None } else { self.element_from_array(value, index - 1) };
-    }
-
-    ///only for debug use with max 11 elements
-    pub fn print(&self) {
-        if self.elements.len() > 50 {
-            return;
-        }
-        println!("{:?}", self.elements);
-        print!("lss_top: [");
-        for value in self.lss_top.iter() {
-            print!("{},", value);
-        }
-        println!("]");
-
-        print!("Level 0: ");
-        for (position, leaf) in self.lss_leaf.iter() {
-            print!("({}{}) ", position, leaf.first_element)
-        }
-
-        for (level, lss) in self.lss_branch.iter().enumerate() {
-            print!("Level {}: ", level);
-            for (position, branch) in lss.into_iter() {
-                print!("{}", position);
-                print!("[");
-                if branch.has_left_child() { print!("l") }
-                if branch.has_right_child() { print!("r") }
-                print!("{} ", branch.descending);
-                print!("] ", );
-            }
-            println!()
-        }
     }
 } //impl YFT
 

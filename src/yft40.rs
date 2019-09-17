@@ -5,7 +5,7 @@ use uint::u40;
 use self::rustc_hash::FxHashMap;
 use predecessor_set::PredecessorSet;
 
-pub type DataType = u40; //TODO test u40
+pub type DataType = u40;
 
 const BIT_LENGTH: usize = 40;
 
@@ -16,20 +16,23 @@ between the quantities (i - 1)2^J + 1 and i* 2^J */
 pub struct YFT {
     //position of successor of subtree in elementarray
     lss_top: Vec<DataType>,
-    //position of successor of subtree, 0 if None TODO  generischer, letztes gesondert behandeln
+    //position of successor of subtree, 0 if None
     lss_leaf: FxHashMap<DataType, TreeLeaf>,
     lss_branch: Vec<FxHashMap<DataType, TreeBranch>>,
     //TODO rustc-hash? perfekter hash?
+    //== lss leaf level
     start_level: usize,
+    //number of levels that are pooled into one level at the top of the xft
     last_level_len: usize,
+    //Original input
     elements: Vec<DataType>,
 }
 
 impl YFT {
     ///elements must be sorted ascending!
     pub fn new(elements: Vec<DataType>, mem: &mut Option<Memlog>, min_start_level: usize, max_lss_level: usize) -> YFT {
-        let start_level = YFT::calc_start_level(&elements, min_start_level, 40 - max_lss_level);
-        let last_level_len = 40 - YFT::calc_lss_top_level(&elements, min_start_level, 40 - max_lss_level);
+        let start_level = YFT::calc_start_level(&elements, min_start_level, BIT_LENGTH - max_lss_level);
+        let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, min_start_level, BIT_LENGTH - max_lss_level);
         let levels = BIT_LENGTH - start_level - last_level_len;
 
         //initialise lss_top
@@ -69,9 +72,6 @@ impl YFT {
             let x_leaf_position = calc_path(*value, 0, start_level);
             if Some(x_leaf_position) == predecessor_x_leaf {
                 //position belongs to same Leaf = > no new node to insert,just increase number of elements under this leaf & update descending pointers
-//                if let Some(TreeNode::Leaf(ref mut leaf)) = lss_branch[0].get_mut(&x_leaf_position) {
-//                    leaf.number_of_elements += 1;
-//                }
                 insert = false;
             } else {
                 //create new leaf node and insert it in level 0
@@ -82,7 +82,7 @@ impl YFT {
             //insert branch nodes
             let mut child = x_leaf_position;
             //iterate through levels, until parent exists
-            for i in 1..lss_branch.len() {
+            for i in 1..levels {
                 //path of new parent
                 let path = calc_path(*value, i, start_level);
                 let is_left_child = is_left_child(child);
@@ -119,10 +119,10 @@ impl YFT {
         println!("Startlevel = {}, normal Levels = {}, Top Levels = {}", self.start_level, self.lss_branch.len() + 1, self.last_level_len);
         let mut len = self.lss_leaf.len();
         let mut count = len;
-        println!("Anzahl Elemente in Ebene 0: {} ({}*Eingabegröße, {}*Levelkapazität)", len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((40 - self.start_level) as f32));
+        println!("Anzahl Elemente in Ebene 0: {} ({}*Eingabegröße, {}*Levelkapazität)", len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.start_level) as f32));
         for level in 1..self.lss_branch.len() + 1 {
             len = self.lss_branch[level - 1].len();
-            println!("Anzahl Elemente in Ebene {}: {} ({}*Eingabegröße, {}*Levelkapazität)", level, len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((40 - self.last_level_len - level) as f32));
+            println!("Anzahl Elemente in Ebene {}: {} ({}*Eingabegröße, {}*Levelkapazität)", level, len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.last_level_len - level) as f32));
             count += self.lss_branch[level - 1].len();
         }
         println!("Anzahl Elemente Insgesamt: {}", count);
