@@ -2,3 +2,4 @@ Rust implementation of something based on Dan Willards [Y-fast-tries](https://ww
 This does not work completely/ relyable and is poorly tidied up!
 I have only few experience in Rust.
 For Documentation how to use, run with -h (don't forget -- when running with cargo).
+Requires [unint](https://github.com/Xi4UWI84dRNrG9kQj5OP/uint) & [stats_alloc](https://github.com/Xi4UWI84dRNrG9kQj5OP/stats_alloc)
