@@ -27,7 +27,7 @@ fn get_queries() -> Vec<usize> {
 
 fn bench_yft64_long(c: &mut Criterion<WallTime>) {
     for i in 1..10 {
-        let elements = get_values().iter().step_by(2).map(|v| v.clone()).collect();
+        let elements = get_values().iter().step_by(i).map(|v| v.clone()).collect();
         let yft = yft::yft64::YFT::new(elements, &mut None, 8, 10);
         let mut group = c.benchmark_group("query");
         for s in get_queries().iter() {
@@ -60,7 +60,7 @@ fn bench_yft64_short(c: &mut Criterion<WallTime>) {
 
 fn bench_yft40_long(c: &mut Criterion<WallTime>) {
     for i in 1..10 {
-        let elements = get_values().iter().step_by(2).map(|v| u40::from(v.clone())).collect();
+        let elements = get_values().iter().step_by(i).map(|v| u40::from(v.clone())).collect();
         let yft = yft::yft40::YFT::new(elements, &mut None, 8, 10);
         let mut group = c.benchmark_group("query");
         for s in get_queries().iter() {
@@ -93,7 +93,7 @@ fn bench_yft40_short(c: &mut Criterion<WallTime>) {
 
 fn bench_bin_search_long(c: &mut Criterion<WallTime>) {
     for i in 1..10 {
-        let values = get_values().iter().step_by(2).map(|v| v.clone()).collect();
+        let values = get_values().iter().step_by(i).map(|v| v.clone()).collect();
         let mut group = c.benchmark_group("query");
         group.measurement_time(Duration::from_millis(1));
         group.warm_up_time(Duration::from_millis(1));
