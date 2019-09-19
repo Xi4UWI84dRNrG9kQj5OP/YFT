@@ -1,6 +1,7 @@
 extern crate rustc_hash;
 
-use memlog::Memlog;
+use mem_log::Memlog;
+use time_log::Timelog;
 use self::rustc_hash::FxHashMap;
 use predecessor_set::PredecessorSet;
 
@@ -29,9 +30,11 @@ pub struct YFT {
 
 impl YFT {
     ///elements must be sorted ascending!
-    pub fn new(elements: Vec<DataType>, mem: &mut Option<Memlog>, min_start_level: usize, max_lss_level: usize) -> YFT {
+    pub fn new(elements: Vec<DataType>, min_start_level: usize, max_lss_level: usize, mem: &mut Option<Memlog>, time : &mut Option<Timelog>) -> YFT {
         let start_level = YFT::calc_start_level(&elements, min_start_level, BIT_LENGTH - max_lss_level);
+        if let Some(time) = time.as_mut() { time.log("start level calculated") };
         let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, min_start_level, BIT_LENGTH - max_lss_level);
+        if let Some(time) = time.as_mut() { time.log("number of top levels calculated") };
         let levels = BIT_LENGTH - start_level - last_level_len;
 
         //initialise lss_top
@@ -51,15 +54,17 @@ impl YFT {
             }
         }
         if let Some(mem) = mem.as_mut() { mem.log("lss_branch top filled") }
+        if let Some(time) = time.as_mut() { time.log("lss_branch top filled") };
 
         //initialise lss_branch
         let mut lss_leaf = FxHashMap::default();
         let mut lss_branch = Vec::with_capacity(levels - 1);
         for _level in 0..levels - 1 { // one less, cause leaf level is stored separately
-            lss_branch.push(FxHashMap::default());
+            lss_branch.push(FxHashMap::default()); //TODO test with_capacity again
         }
 
         if let Some(mem) = mem.as_mut() { mem.log("lss_branch initialized") }
+        if let Some(time) = time.as_mut() { time.log("lss_branch initialized") };
 
         //fill
         let mut predecessor_x_leaf: Option<DataType> = None;
@@ -106,6 +111,7 @@ impl YFT {
             predecessor_x_leaf = Some(x_leaf_position);
             if element_array_index % 1000000 == 0 {
                 if let Some(mem) = mem.as_mut() { mem.log(format!("element {} pushed to lss_branch", element_array_index).as_str()) }
+                if let Some(time) = time.as_mut() { time.log(format!("element {} pushed to lss_branch", element_array_index).as_str()) };
             }
         }
 
@@ -121,7 +127,7 @@ impl YFT {
         println!("Anzahl Elemente in Ebene 0: {} ({}*Eingabegröße, {}*Levelkapazität)", len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.start_level) as f32));
         for level in 1..self.lss_branch.len() + 1 {
             len = self.lss_branch[level - 1].len();
-            println!("Anzahl Elemente in Ebene {}: {} ({}*Eingabegröße, {}*Levelkapazität)", level, len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.last_level_len - level) as f32));
+            println!("Anzahl Elemente in Ebene {}: {} ({}*Eingabegröße, {}*Levelkapazität)", level, len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.start_level - level) as f32));
             count += self.lss_branch[level - 1].len();
         }
         println!("Anzahl Elemente Insgesamt: {}", count);

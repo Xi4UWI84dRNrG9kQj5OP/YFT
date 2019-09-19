@@ -16,7 +16,8 @@ pub mod yft64;
 pub mod yft40;
 pub mod predecessor_set;
 pub mod nmbrsrc;
-pub mod memlog;
+pub mod mem_log;
+pub mod time_log;
 
 #[cfg(test)]
 mod tests {
