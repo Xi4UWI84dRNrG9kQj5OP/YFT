@@ -5,8 +5,6 @@ extern crate structopt;
 extern crate bitflags;
 extern crate uint;
 extern crate stats_alloc;
-extern crate gnuplot;
-
 
 pub use yft64::YFT;
 //use std::path::PathBuf;
@@ -16,8 +14,7 @@ pub mod yft64;
 pub mod yft40;
 pub mod predecessor_set;
 pub mod nmbrsrc;
-pub mod mem_log;
-pub mod time_log;
+pub mod log;
 
 #[cfg(test)]
 mod tests {

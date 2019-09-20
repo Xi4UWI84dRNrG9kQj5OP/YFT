@@ -9,7 +9,6 @@ rand = "0.7.0"
 rand_distr = "0.2.1"
 structopt = "0.2.18"
 bitflags = "1.1.0"
-gnuplot = "0.0.31"
 uint = { path = "../uint"}
 rustc-hash = "1.0.1"
 

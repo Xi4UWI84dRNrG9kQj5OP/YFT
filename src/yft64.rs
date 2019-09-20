@@ -1,7 +1,7 @@
 extern crate rustc_hash;
 
-use mem_log::Memlog;
-use time_log::Timelog;
+use log::Log;
+//use uint::u40;
 use self::rustc_hash::FxHashMap;
 use predecessor_set::PredecessorSet;
 
@@ -30,16 +30,15 @@ pub struct YFT {
 
 impl YFT {
     ///elements must be sorted ascending!
-    pub fn new(elements: Vec<DataType>, min_start_level: usize, max_lss_level: usize, mem: &mut Option<Memlog>, time : &mut Option<Timelog>) -> YFT {
+    pub fn new(elements: Vec<DataType>, min_start_level: usize, max_lss_level: usize, log: &mut Log) -> YFT {
         let start_level = YFT::calc_start_level(&elements, min_start_level, BIT_LENGTH - max_lss_level);
-        if let Some(time) = time.as_mut() { time.log("start level calculated") };
+        log.log_time("start level calculated");
         let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, min_start_level, BIT_LENGTH - max_lss_level);
-        if let Some(time) = time.as_mut() { time.log("number of top levels calculated") };
+        log.log_time("number of top levels calculated");
         let levels = BIT_LENGTH - start_level - last_level_len;
 
         //initialise lss_top
         let mut lss_top = vec![0; 2usize.pow(last_level_len as u32)];
-        if let Some(mem) = mem.as_mut() { mem.log("lss_branch top declared") }
         for (pos, value) in elements.iter().enumerate() {
             //check array is sorted
             debug_assert!(pos == 0 || value >= &elements[pos - 1]);
@@ -53,8 +52,7 @@ impl YFT {
                 lss_top[lss_top_pos] = pos;
             }
         }
-        if let Some(mem) = mem.as_mut() { mem.log("lss_branch top filled") }
-        if let Some(time) = time.as_mut() { time.log("lss_branch top filled") };
+        log.log_mem("lss_branch top filled").log_time("lss_branch top filled");
 
         //initialise lss_branch
         let mut lss_leaf = FxHashMap::default();
@@ -63,8 +61,7 @@ impl YFT {
             lss_branch.push(FxHashMap::default()); //TODO test with_capacity again
         }
 
-        if let Some(mem) = mem.as_mut() { mem.log("lss_branch initialized") }
-        if let Some(time) = time.as_mut() { time.log("lss_branch initialized") };
+        log.log_mem("lss_branch initialized").log_time("lss_branch initialized");
 
         //fill
         let mut predecessor_x_leaf: Option<DataType> = None;
@@ -110,8 +107,7 @@ impl YFT {
 
             predecessor_x_leaf = Some(x_leaf_position);
             if element_array_index % 1000000 == 0 {
-                if let Some(mem) = mem.as_mut() { mem.log(format!("element {} pushed to lss_branch", element_array_index).as_str()) }
-                if let Some(time) = time.as_mut() { time.log(format!("element {} pushed to lss_branch", element_array_index).as_str()) };
+                log.log_mem(format!("element {} pushed to lss_branch", element_array_index).as_str()).log_time(format!("element {} pushed to lss_branch", element_array_index).as_str());
             }
         }
 
@@ -120,17 +116,17 @@ impl YFT {
     }
 
     ///prints number of elements + relative fill level per lss level
-    pub fn print_stats(&self) {
-        println!("Startlevel = {}, normal Levels = {}, Top Levels = {}", self.start_level, self.lss_branch.len() + 1, self.last_level_len);
+    pub fn print_stats(&self, log: &Log) {
+        log.print_result(format!("start_level={}\tnormal_levels={}\ttop_levels={}", self.start_level, self.lss_branch.len() + 1, self.last_level_len));
         let mut len = self.lss_leaf.len();
         let mut count = len;
-        println!("Anzahl Elemente in Ebene 0: {} ({}*Eingabegröße, {}*Levelkapazität)", len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.start_level) as f32));
+        log.print_result(format!("level=0\tnodes={}\trelative_to_input={}\trelative_to_capacity={}", len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.start_level) as f32)));
         for level in 1..self.lss_branch.len() + 1 {
             len = self.lss_branch[level - 1].len();
-            println!("Anzahl Elemente in Ebene {}: {} ({}*Eingabegröße, {}*Levelkapazität)", level, len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.start_level - level) as f32));
+            log.print_result(format!("level={}\tnodes={}\trelative_to_input={}\trelative_to_capacity={}", level, len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.start_level - level) as f32)));
             count += self.lss_branch[level - 1].len();
         }
-        println!("Anzahl Elemente Insgesamt: {}", count);
+        log.print_result(format!("level=-1\tnodes={}", count));
     }
 
     fn calc_start_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize) -> usize {

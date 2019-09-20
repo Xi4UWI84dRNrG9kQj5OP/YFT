@@ -16,8 +16,7 @@ pub mod yft64;
 pub mod yft40;
 pub mod predecessor_set;
 pub mod nmbrsrc;
-pub mod mem_log;
-pub mod time_log;
+pub mod log;
 
 /// Y-Fast-Trie Test Implementation
 #[derive(StructOpt, Debug)]
@@ -39,6 +38,9 @@ struct Args {
     /// Log memory usage
     #[structopt(short, long)]
     memory: bool,
+    /// Name of this run. Used for logging. If not set, a random number is used.
+    #[structopt(short = "n", long)]
+    run_name: Option<String>,
     /// File where results should be saved to
     /// If there is no predecessor, 0 will be printed
     #[structopt(short, long, parse(from_os_str))]
@@ -80,23 +82,23 @@ enum Distribution {
 
 fn main() {
     let args = Args::from_args();
+    let mut log =
+        if let Some(name) = args.run_name {
+            log::Log::new(name)
+        } else {
+            log::Log::new(nmbrsrc::get_uniform_dist(1)[0].to_string())
+        };
 
     //create memory logger if option is set
-    let mut mem =
-        if args.memory {
-            Some(mem_log::Memlog::new(None))
-        } else {
-            None
-        };
-    if let Some(mem) = mem.as_mut() { mem.log("start") };
+    if args.memory {
+        log.set_log_mem();
+    };
+    log.log_mem("start");
 
     //create time logger if option is set
-    let mut time =
-        if args.time {
-            Some(time_log::Timelog::new())
-        } else {
-            None
-        };
+    if args.time {
+        log.set_log_time();
+    };
 
     //create yft input
     let values =
@@ -123,16 +125,13 @@ fn main() {
         }
     }
 
-    if let Some(mem) = mem.as_mut() { mem.log("values loaded") };
-    if let Some(time) = time.as_mut() { time.log("values loaded") };
-
+    log.log_mem("values loaded").log_time("values loaded");
     {
         //create yft
         if args.u40 {
-            let yft = yft40::YFT::new(values.into_iter().map(|v| u40::from(v)).collect(), args.min_start_level, args.max_lss_level, &mut mem, &mut time);
+            let yft = yft40::YFT::new(values.into_iter().map(|v| u40::from(v)).collect(), args.min_start_level, args.max_lss_level, &mut log);
 
-            if let Some(mem) = mem.as_mut() { mem.log("yft initialized") };
-            if let Some(time) = time.as_mut() { time.log("yft initialized") };
+            log.log_mem("yft initialized").log_time("yft initialized");
 
             //load queries & aply them, if option is set
             if let Some(file) = args.queries {
@@ -145,16 +144,15 @@ fn main() {
                 } else {
                     let _: Vec<usize> = test_values.into_iter().map(|v| usize::from(yft.predecessor(u40::from(v)).unwrap_or(u40::from(0)))).collect(); //TODO time
                 }
-                if let Some(time) = time.as_mut() { time.log("queries processed") };
+                log.log_time("queries processed");
             }
             if args.memory {
-                yft.print_stats();
+                yft.print_stats(&log);
             }
         } else {
-            let yft = YFT::new(values, args.min_start_level, args.max_lss_level, &mut mem, &mut time);
+            let yft = YFT::new(values, args.min_start_level, args.max_lss_level, &mut log);
 
-            if let Some(mem) = mem.as_mut() { mem.log("yft initialized") }
-            if let Some(time) = time.as_mut() { time.log("yft initialized") };
+            log.log_mem("yft initialized").log_time("yft initialized");
 
             //load queries & aply them, if option is set
             if let Some(file) = args.queries {
@@ -167,14 +165,14 @@ fn main() {
                 } else {
                     let _: Vec<usize> = test_values.into_iter().map(|v| yft.predecessor(v).unwrap_or(0)).collect();
                 }
-                if let Some(time) = time.as_mut() { time.log("queries processed") };
+                log.log_time("queries processed");
             }
             if args.memory {
-                yft.print_stats();
+                yft.print_stats(&log);
             }
         };
     }
-    if let Some(mem) = mem.as_mut() { mem.log("end") }
+    log.log_mem("end");
 
 //    if let Some(file) = args.gnuplot {
 //        if let Some(mem) = mem.as_mut() { mem.plot(file.into_os_string().into_string().unwrap(), &"Memory usage") }
