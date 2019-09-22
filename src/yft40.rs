@@ -126,7 +126,7 @@ impl YFT {
             log.print_result(format!("level={}\tnodes={}\trelative_to_input={}\trelative_to_capacity={}", level, len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.start_level - level) as f32)));
             count += self.lss_branch[level - 1].len();
         }
-        log.print_result(format!("level=-1\tnodes={}", count));
+        log.print_result(format!("level=-1\tnodes={}\telements={}", count, self.elements.len()));
     }
 
     fn calc_start_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize) -> usize {

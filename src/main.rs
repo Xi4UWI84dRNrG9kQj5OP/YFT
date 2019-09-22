@@ -77,6 +77,10 @@ enum Distribution {
     Uniform {
         length: usize,
     },
+    Poisson {
+        length: usize,
+        lambda: f64
+    }
 }
 
 
@@ -112,6 +116,9 @@ fn main() {
                     }
                     Distribution::Uniform { length } => {
                         nmbrsrc::get_uniform_dist(length)
+                    }
+                    Distribution::Poisson { length, lambda } => {
+                        nmbrsrc::get_poisson_dist(length, lambda)
                     }
                 }
             } else {
