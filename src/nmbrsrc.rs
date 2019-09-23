@@ -1,13 +1,13 @@
 extern crate rand;
 extern crate rand_distr;
+extern crate serde;
+extern crate rmp_serde as rmps;
 
-use nmbrsrc::rand::{distributions::Uniform, Rng};
-use nmbrsrc::rand_distr::{Poisson, Normal, Distribution};
+use self::rand::{distributions::Uniform, Rng};
+use self::rand_distr::{Poisson, Normal, Distribution};
 use std::fs::File;
-use std::io::{BufRead, Write};
-use std::io::BufReader;
-
-//const U40_MAX_VALLUE : f64= 1099511627775.0;
+use self::serde::{Serialize, Deserialize};
+use self::rmps::{Serializer, Deserializer};
 
 //TODO Filter duplicates?
 
@@ -51,24 +51,20 @@ pub fn get_uniform_dist(length: usize) -> Vec<usize> {
 ///If File exists, values will be loaded & written sorted with new values. In this case.
 ///Else a new File will be created
 pub fn save(values: &Vec<usize>, path: &str) -> std::io::Result<()> {
-    let value_string = if let Ok(mut old_values) = load(path) {
+    if let Ok(mut  old_values) = load(path) {
         old_values.append(&mut values.clone());
         old_values.sort(); //TODO theoretisch könnte man hier zeit sparen, wenn man ausnutzt, dass beide vektoren sortiert sind
-        format!("{:?}", old_values)
+        let mut output = File::create(path)?;
+        Ok(old_values.serialize(&mut Serializer::new(&mut output)).unwrap())
     } else {
-        format!("{:?}", values)
-    };
-    let mut output = File::create(path)?;
-    output.write_all(value_string[1..value_string.len() - 1].as_bytes())
+        let mut output = File::create(path)?;
+        Ok(values.serialize(&mut Serializer::new(&mut output)).unwrap())
+    }
 }
 
 pub fn load(path: &str) -> std::io::Result<Vec<usize>> {
     let input = File::open(path)?;
-    let file_reader = BufReader::new(&input);
-    for l in file_reader.lines() {
-        let line = l?;
-        let v = line.split(",").map(|x| x.trim()).filter(|s| !s.is_empty());
-        return Ok(v.into_iter().map(|s| s.parse::<usize>().unwrap()).collect());
-    }
-    return Ok(vec![]);
+    let mut deserializer = Deserializer::new(input);
+    let values: Vec<usize> = Deserialize::deserialize(&mut deserializer).unwrap();
+    Ok(values)
 }
