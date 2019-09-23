@@ -10,6 +10,7 @@ static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
 
 pub struct Log<'a> {
     run_name: String,
+    run_number: usize,
     memlog: Option<Memlog<'a>>,
     timelog: Option<Timelog>,
 }
@@ -25,7 +26,11 @@ struct Memlog<'a> {
 
 impl<'a> Log<'a> {
     pub fn new(run_name: String) -> Log<'a> {
-        Log { run_name: run_name, memlog: None, timelog: None }
+        Log { run_name: run_name, run_number: 0, memlog: None, timelog: None }
+    }
+
+    pub fn inc_run_number(&mut self) {
+        self.run_number += 1;
     }
 
     pub fn set_log_time(&mut self) -> &mut Log<'a> {
@@ -60,6 +65,6 @@ impl<'a> Log<'a> {
 
     //values must not be empty and have to be in format "value_name=value\tvalue2_name=value2[..]"
     pub fn print_result(&self, values: String) {
-            println!("RESULT\trun={}\t{}", self.run_name, values);
+        println!("RESULT\trun={}\tnumber={}\t{}", self.run_name, self.run_number, values);
     }
 }

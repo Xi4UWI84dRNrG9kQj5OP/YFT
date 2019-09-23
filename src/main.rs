@@ -145,6 +145,8 @@ fn main() {
             if values.len() < 2 {
                 break;
             }
+            //log is not used between begin of for loop and here -> no problems
+            log.inc_run_number();
         } else {
             if i > 1 {
                 break;
