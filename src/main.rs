@@ -32,6 +32,9 @@ struct Args {
     /// Minimal height of lowest lss level
     #[structopt(short = "a", long, default_value = "10")]
     min_start_level: usize,
+    /// Use binary search instead of Y-Fast-Trie
+    #[structopt(short, long)]
+    bin_search: bool,
     /// Run multiple times, each time with half much elements than before
     #[structopt(short, long)]
     element_length_test: bool,
@@ -159,8 +162,21 @@ fn main() {
         log.log_mem("values loaded").log_time("values loaded");
 
         {
-            //create yft
-            if args.u40 {
+            if args.bin_search {
+                //load queries & aply them, if option is set
+                if let Some(ref file) = args.queries {
+                    let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
+                    if let Some(ref output) = args.output {
+                        let predecessors = &test_values.into_iter().map(|v| bin_search_pred(&values, v).unwrap_or(0)).collect();
+                        if let Err(e) = nmbrsrc::save(predecessors, output.to_str().unwrap()) {
+                            dbg!(e);
+                        }
+                    } else {
+                        let _: Vec<usize> = test_values.into_iter().map(|v| bin_search_pred(&values, v).unwrap_or(0)).collect();
+                    }
+                    log.log_time("queries processed");
+                }
+            } else if args.u40 {
                 let yft = yft40::YFT::new(values.into_iter().map(|v| u40::from(v)).collect(), args.min_start_level, args.max_lss_level, &mut log);
 
                 log.log_mem("yft initialized").log_time("yft initialized");
@@ -205,14 +221,32 @@ fn main() {
             };
             //yft mem is freed here
         }
-        if ! args.element_length_test {
+        if !args.element_length_test {
             break;
         }
     }
     {} // end for
     log.log_mem("end");
+}
 
-//    if let Some(file) = args.gnuplot {
-//        if let Some(mem) = mem.as_mut() { mem.plot(file.into_os_string().into_string().unwrap(), &"Memory usage") }
-//    }
+
+///binary search predecessor
+fn bin_search_pred(element_list: &Vec<usize>, element: usize) -> Option<usize> {
+    let mut l = 0;
+    let mut r = element_list.len() - 1;
+
+    while l != r {
+        let m = (l + r) / 2;
+        if element_list[m] < element {
+            r = m
+        } else {
+            l = m + 1;
+        }
+    }
+
+    if element >= element_list[l] {
+        Some(element_list[l])
+    } else {
+        None
+    }
 }
