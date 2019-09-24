@@ -84,6 +84,10 @@ enum Distribution {
         length: usize,
         lambda: f64,
     },
+    PowerLaw {
+        length: usize,
+        n: f64,
+    },
 }
 
 
@@ -125,6 +129,9 @@ fn main() {
                         Distribution::Poisson { length, lambda } => {
                             nmbrsrc::get_poisson_dist(*length, *lambda)
                         }
+                        Distribution::PowerLaw { length, n } => {
+                            nmbrsrc::get_power_law_dist(*length, *n)
+                        }
                     }
                 } else {
                     panic!("Distribution or input File required!");
@@ -147,10 +154,6 @@ fn main() {
             }
             //log is not used between begin of for loop and here -> no problems
             log.inc_run_number();
-        } else {
-            if i > 1 {
-                break;
-            }
         }
 
         log.log_mem("values loaded").log_time("values loaded");
@@ -201,6 +204,9 @@ fn main() {
                 }
             };
             //yft mem is freed here
+        }
+        if ! args.element_length_test {
+            break;
         }
     }
     {} // end for

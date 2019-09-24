@@ -147,7 +147,9 @@ fn bench_u40_ops(c: &mut Criterion<WallTime>) {
     group.warm_up_time(Duration::from_millis(1));
     for s in get_queries().iter() {
         group.bench_with_input(BenchmarkId::new("bench_u40_ops", s), s, |b, &_s| {
-            b.iter(|| vec![u40::from(0); 1000]);
+            let mut x = u40::from(1);
+            let vec1 = vec![u40::from(1); 1000];
+            b.iter(|| vec1.iter().map(|v| {x = x + *v; x.clone()}).collect());
         });
     }
     group.finish();
@@ -159,7 +161,9 @@ fn bench_u64_ops(c: &mut Criterion<WallTime>) {
     group.warm_up_time(Duration::from_millis(1));
     for s in get_queries().iter() {
         group.bench_with_input(BenchmarkId::new("bench_u64_ops", s), s, |b, &_s| {
-            b.iter(|| vec![0; 1000]);
+            let mut x = 1;
+            let vec1 = vec![1; 1000];
+            b.iter(|| vec1.iter().map(|v| {x += v; x.clone()}));
         });
     }
     group.finish();
