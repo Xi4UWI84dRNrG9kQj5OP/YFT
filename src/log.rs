@@ -45,7 +45,7 @@ impl<'a> Log<'a> {
 
     pub fn log_time(&mut self, info: &str) -> &mut Log<'a> {
         if let Some(time) = self.timelog.as_ref() {
-            self.print_result(format!("info={}\ttime_since_last_call={}\ttime_since_start={}", info, time.start.elapsed().as_millis(), time.last.elapsed().as_millis()));
+            self.print_result(format!("info={}\ttimeSinceLastCall={}\ttimeSinceStart={}", info, time.last.elapsed().as_millis(), time.start.elapsed().as_millis()));
         } else { //rusts borrow checker can be ugly
             return self;
         }
@@ -58,7 +58,7 @@ impl<'a> Log<'a> {
     pub fn log_mem(&mut self, info: &str) -> &mut Log<'a> {
         if let Some(mem) = self.memlog.as_ref() {
             let stats = mem.reg.change();
-            self.print_result(format!("info={}\tbytes_allocated={}\tmax_bytes_allocated={}", info, stats.bytes_allocated - stats.bytes_deallocated as usize, stats.bytes_max_used as usize));
+            self.print_result(format!("info={}\tbytesAllocated={}\tmaxBytesAllocated={}", info, stats.bytes_allocated - stats.bytes_deallocated as usize, stats.bytes_max_used as usize));
         }
         self
     }

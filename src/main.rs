@@ -66,10 +66,18 @@ struct Args {
     /// Use 40 bit integer
     #[structopt(short, long)]
     u40: bool,
+    /// Minium Number of Elements in first lss level relative to the input in percentage (do not write the % char)
+    /// Must be beewtwin 1 and 100.
+    #[structopt(short = "x", long, default_value = "50")]
+    min_start_level_load_factor: usize,
+    /// Minium Number of Elements in first lss level relative to the input in percentage (do not write the % char)
+    /// Must be beewtwin 1 and 100.
+    #[structopt(short = "y", long, default_value = "90")]
+    max_last_level_load_factor: usize,
     /// Maximum number of lss levels
     #[structopt(short = "z", long, default_value = "8")]
     max_lss_level: usize,
-}
+} //TODO am anfang einmal (ohne result) ausgeben, spart das nervige ändern der batchdatei
 
 // arg subcommand for number generation
 #[derive(Debug)] //this should not be necessary
@@ -96,6 +104,8 @@ enum Distribution {
 
 fn main() {
     let args = Args::from_args();
+    println!("{:?}", args);
+
     let mut log =
         if let Some(name) = args.run_name {
             log::Log::new(name)
@@ -163,6 +173,8 @@ fn main() {
 
         {
             if args.bin_search {
+                //print stats
+                log.print_result(format!("level=-1\telements={}", values.len()));
                 //load queries & aply them, if option is set
                 if let Some(ref file) = args.queries {
                     let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
@@ -198,7 +210,7 @@ fn main() {
                     yft.print_stats(&log);
                 }
             } else {
-                let yft = YFT::new(values, args.min_start_level, args.max_lss_level, &mut log);
+                let yft = YFT::new(values, args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log);
 
                 log.log_mem("yft initialized").log_time("yft initialized");
 

@@ -30,10 +30,10 @@ pub struct YFT {
 
 impl YFT {
     ///elements must be sorted ascending!
-    pub fn new(elements: Vec<DataType>, min_start_level: usize, max_lss_level: usize, log: &mut Log) -> YFT {
-        let start_level = YFT::calc_start_level(&elements, min_start_level, BIT_LENGTH - max_lss_level);
+    pub fn new(elements: Vec<DataType>, min_start_level: usize, min_start_level_load_factor: usize, max_lss_level: usize, max_last_level_load_factor: usize, log: &mut Log) -> YFT {
+        let start_level = YFT::calc_start_level(&elements, min_start_level, BIT_LENGTH - max_lss_level, min_start_level_load_factor);
         log.log_time("start level calculated");
-        let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, min_start_level, BIT_LENGTH - max_lss_level);
+        let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, start_level, BIT_LENGTH - max_lss_level, max_last_level_load_factor);
         log.log_time("number of top levels calculated");
         let levels = BIT_LENGTH - start_level - last_level_len;
 
@@ -129,11 +129,11 @@ impl YFT {
         log.print_result(format!("level=-1\tnodes={}\telements={}", count, self.elements.len()));
     }
 
-    fn calc_start_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize) -> usize {
+    fn calc_start_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize, min_load_factor: usize) -> usize {
         let mut range = (min_start_level, max_lss_level - 1);
         while range.0 < range.1 {
             let candidate = (range.0 + range.1) / 2;
-            if YFT::calc_nodes_in_level(candidate, elements) / 90 >= elements.len() / 100 { //TODO testen was hier gut ist, als Parameter?
+            if YFT::calc_nodes_in_level(candidate, elements) / min_load_factor >= elements.len() / 100 {
                 range = (candidate + 1, range.1)
             } else {
                 range = (range.0, candidate)
@@ -142,17 +142,17 @@ impl YFT {
         range.1 as usize
     }
 
-    fn calc_lss_top_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize) -> usize {
+    fn calc_lss_top_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize, max_load_factor: usize) -> usize {
         let mut range = (min_start_level + 1, max_lss_level);
         while range.0 < range.1 {
             let candidate = (range.0 + range.1) / 2;
-            if YFT::calc_nodes_in_level(candidate, elements) / 90 < 2usize.pow((BIT_LENGTH - candidate) as u32) / 100 { //TODO testen was hier gut ist, als Parameter?
+            if YFT::calc_nodes_in_level(candidate, elements) / max_load_factor < 2usize.pow((BIT_LENGTH - candidate) as u32) / 100 {
                 range = (candidate + 1, range.1)
             } else {
                 range = (range.0, candidate)
             }
         }
-        if range.1 > 20 { range.1 as usize } else { 20 }
+        range.1 as usize
     }
 
     ///count how many nodes are in one level
