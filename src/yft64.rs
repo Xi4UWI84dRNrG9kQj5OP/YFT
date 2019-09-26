@@ -45,8 +45,12 @@ impl YFT {
             //check value not to big
 //            debug_assert!(pos >> BIT_LENGTH == 0);
             let mut lss_top_pos = YFT::lss_top_position(value, last_level_len);
-//            println!("lss_top_pos {}, value {}, {}", lss_top_pos, value, value >> 56);
+
             //set successors
+            if !is_left_child(YFT::lss_top_position(value, last_level_len + 1)) {
+                // for queries on left child of this top level element, this element is its successor
+                lss_top[lss_top_pos] = pos;
+            }
             while lss_top_pos > 0 && lss_top[lss_top_pos - 1] == 0 {
                 lss_top_pos -= 1;
                 lss_top[lss_top_pos] = pos;
@@ -112,7 +116,7 @@ impl YFT {
         }
 
         //return
-        YFT { lss_top, lss_leaf, lss_branch: lss_branch, start_level: start_level, last_level_len: last_level_len, elements }
+        YFT { lss_top, lss_leaf, lss_branch, start_level, last_level_len, elements }
     }
 
     ///prints number of elements + relative fill level per lss level
@@ -156,7 +160,7 @@ impl YFT {
     }
 
     ///count how many nodes are in one level
-    fn calc_nodes_in_level(level: usize, elements: &Vec<DataType>) -> usize { //TODO mögliche Beschleunigung durch Stichproben
+    fn calc_nodes_in_level(level: usize, elements: &Vec<DataType>) -> usize {
         let mut last_val = calc_path(elements[0], level, 0);
         let mut count = 1;
         for value in elements {
@@ -258,6 +262,15 @@ impl YFT {
 
     ///can only be used, if there is no existing node below
     fn predec_lss_top(&self, position: DataType) -> Option<DataType> {
+        // assert not in lss branch
+        debug_assert!(self.lss_branch.len() == 0 || match self.lss_branch[self.lss_branch.len() - 1].get(&calc_path(position, BIT_LENGTH - self.last_level_len - 1 - self.start_level, self.start_level)) {
+            None => true,
+            Some(_) => false
+        });
+        debug_assert!(self.lss_branch.len() > 0 || match self.lss_leaf.get(&calc_path(position, BIT_LENGTH - self.last_level_len - 1 - self.start_level, self.start_level)) {
+            None => true,
+            Some(_) => false
+        });
         unsafe {
             let pos = *self.lss_top.get_unchecked(YFT::lss_top_position(&position, self.last_level_len));
             if pos == 0 {
@@ -279,7 +292,7 @@ impl YFT {
         //test next value greater than search one
         debug_assert!(index + 1 >= self.elements.len() || if let Some(successor) = self.elements.get(index + 1) { successor >= &position } else { true });
         //test value smaller than searched one
-        debug_assert!(if let Some(predecessor) = self.elements.get(index) { predecessor < &position } else { true });
+        debug_assert!(if let Some(predecessor) = self.elements.get(index) { *predecessor < position } else { true });
         debug_assert!(index < self.elements.len());
         unsafe {
             return Some(*self.elements.get_unchecked(index));

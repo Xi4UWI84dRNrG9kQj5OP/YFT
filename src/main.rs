@@ -173,6 +173,7 @@ fn main() {
 
         {
             if args.bin_search {
+                log.log_mem("initialized").log_time("initialized");
                 //print stats
                 log.print_result(format!("level=-1\telements={}", values.len()));
                 //load queries & aply them, if option is set
@@ -188,10 +189,10 @@ fn main() {
                     }
                     log.log_time("queries processed");
                 }
-            } else if args.u40 {
-                let yft = yft40::YFT::new(values.into_iter().map(|v| u40::from(v)).collect(), args.min_start_level, args.max_lss_level, &mut log);
+            } else if args.u40 {//TODO direkt args mitgeben?
+                let yft = yft40::YFT::new(values.into_iter().map(|v| u40::from(v)).collect(), args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log);
 
-                log.log_mem("yft initialized").log_time("yft initialized");
+                log.log_mem("initialized").log_time("initialized");
 
                 //load queries & aply them, if option is set
                 if let Some(ref file) = args.queries {
@@ -212,7 +213,7 @@ fn main() {
             } else {
                 let yft = YFT::new(values, args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log);
 
-                log.log_mem("yft initialized").log_time("yft initialized");
+                log.log_mem("initialized").log_time("initialized");
 
                 //load queries & aply them, if option is set
                 if let Some(ref file) = args.queries {

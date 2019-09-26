@@ -30,10 +30,10 @@ pub struct YFT {
 
 impl YFT {
     ///elements must be sorted ascending!
-    pub fn new(elements: Vec<DataType>, min_start_level: usize, max_lss_level: usize, log: &mut Log) -> YFT {
-        let start_level = YFT::calc_start_level(&elements, min_start_level, BIT_LENGTH - max_lss_level);
+    pub fn new(elements: Vec<DataType>, min_start_level: usize, min_start_level_load_factor: usize, max_lss_level: usize, max_last_level_load_factor: usize, log: &mut Log) -> YFT {
+        let start_level = YFT::calc_start_level(&elements, min_start_level, BIT_LENGTH - max_lss_level, min_start_level_load_factor);
         log.log_time("start level calculated");
-        let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, min_start_level, BIT_LENGTH - max_lss_level);
+        let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, start_level, BIT_LENGTH - max_lss_level, max_last_level_load_factor);
         log.log_time("number of top levels calculated");
         let levels = BIT_LENGTH - start_level - last_level_len;
 
@@ -45,8 +45,12 @@ impl YFT {
             //check value not to big
             debug_assert!(pos >> (levels + start_level + last_level_len) == 0);
             let mut lss_top_pos = YFT::lss_top_position(value, last_level_len) as usize;
-//            println!("lss_top_pos {}, value {}, {}", lss_top_pos, value, value >> 56);
+
             //set successors
+            if !is_left_child(DataType::from(YFT::lss_top_position(value, last_level_len + 1))) {
+                // for queries on left child of this top level element, this element is its successor
+                lss_top[lss_top_pos] = DataType::from(pos);
+            }
             while lss_top_pos > 0 && lss_top[lss_top_pos - 1] == 0 {
                 lss_top_pos -= 1;
                 lss_top[lss_top_pos] = DataType::from(pos);
@@ -112,7 +116,7 @@ impl YFT {
         }
 
         //return
-        YFT { lss_top, lss_leaf, lss_branch: lss_branch, start_level: start_level, last_level_len: last_level_len, elements }
+        YFT { lss_top, lss_leaf, lss_branch, start_level, last_level_len, elements }
     }
 
     ///prints number of elements + relative fill level per lss level
@@ -129,11 +133,11 @@ impl YFT {
         log.print_result(format!("level=-1\tnodes={}\telements={}", count, self.elements.len()));
     }
 
-    fn calc_start_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize) -> usize {
+    fn calc_start_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize, min_load_factor: usize) -> usize {
         let mut range = (min_start_level, max_lss_level - 1);
         while range.0 < range.1 {
             let candidate = (range.0 + range.1) / 2;
-            if YFT::calc_nodes_in_level(candidate, elements) / 90 >= elements.len() / 100 { //TODO testen was hier gut ist, als Parameter?
+            if YFT::calc_nodes_in_level(candidate, elements) / min_load_factor >= elements.len() / 100 {
                 range = (candidate + 1, range.1)
             } else {
                 range = (range.0, candidate)
@@ -142,17 +146,17 @@ impl YFT {
         range.1 as usize
     }
 
-    fn calc_lss_top_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize) -> usize {
+    fn calc_lss_top_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize, max_load_factor: usize) -> usize {
         let mut range = (min_start_level + 1, max_lss_level);
         while range.0 < range.1 {
             let candidate = (range.0 + range.1) / 2;
-            if YFT::calc_nodes_in_level(candidate, elements) / 90 < 2usize.pow((BIT_LENGTH - candidate) as u32) / 100 { //TODO testen was hier gut ist, als Parameter?
+            if YFT::calc_nodes_in_level(candidate, elements) / max_load_factor < 2usize.pow((BIT_LENGTH - candidate) as u32) / 100 {
                 range = (candidate + 1, range.1)
             } else {
                 range = (range.0, candidate)
             }
         }
-        if range.1 > 20 { range.1 as usize } else { 20 }
+        range.1 as usize
     }
 
     ///count how many nodes are in one level
@@ -258,6 +262,15 @@ impl YFT {
 
     ///can only be used, if there is no existing node below
     fn predec_lss_top(&self, position: DataType) -> Option<DataType> {
+        // assert not in lss branch
+        debug_assert!(self.lss_branch.len() == 0 || match self.lss_branch[self.lss_branch.len() - 1].get(&calc_path(position, BIT_LENGTH - self.last_level_len - 1 - self.start_level, self.start_level)) {
+            None => true,
+            Some(_) => false
+        });
+        debug_assert!(self.lss_branch.len() > 0 || match self.lss_leaf.get(&calc_path(position, BIT_LENGTH - self.last_level_len - 1 - self.start_level, self.start_level)) {
+            None => true,
+            Some(_) => false
+        });
         unsafe {
             let pos = *self.lss_top.get_unchecked(YFT::lss_top_position(&position, self.last_level_len));
             if pos == 0 {
