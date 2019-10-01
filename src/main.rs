@@ -16,6 +16,7 @@ pub mod yft64;
 pub mod yft40_rust_hash;
 pub mod yft40_fx_hash;
 pub mod yft40_hash_brown;
+pub mod yft40_im_hash;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
@@ -44,6 +45,7 @@ struct Args {
     /// 0 = std
     /// 1 = Fx
     /// 2 = Hashbrown
+    /// 3 = im-rc
     #[structopt(short, long, default_value = "1")]
     hash_map: usize,
     /// Log memory usage
@@ -213,33 +215,48 @@ fn main() {
                     log.log_time("queries processed");
                 }
             } else if args.u40 {
-                let yft = match args.values {
+                //macro to load & test yft
+                macro_rules! testyft40 {
+                    (  $yft:ty; $values:expr ) => {
+                        {
+                            let yft =  <$yft>::new($values, args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log);
+
+                            log.log_mem("initialized").log_time("initialized");
+
+                            //load queries & aply them, if option is set
+                            if let Some(ref file) = args.queries {
+                                let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
+                                if let Some(ref output) = args.output {
+                                    let predecessors = &test_values.into_iter().map(|v| usize::from(yft.predecessor(u40::from(v)).unwrap_or(u40::from(0)))).collect();
+                                    if let Err(e) = nmbrsrc::save(predecessors, output.to_str().unwrap()) {
+                                        dbg!(e);
+                                    }
+                                } else {
+                                    let _: Vec<usize> = test_values.into_iter().map(|v| usize::from(yft.predecessor(u40::from(v)).unwrap_or(u40::from(0)))).collect(); //TODO time
+                                }
+                                log.log_time("queries processed");
+                            }
+                            if args.memory {
+                                yft.print_stats(&log);
+                            }
+                        }
+                    };
+                }
+
+                match args.values {
                     ValueSrc::U40 { path: _ } => {
-                        yft40_rust_hash::YFT::new(values.1, args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log)
+                        testyft40!(yft40_rust_hash::YFT; values.1);
                     }
                     _ => {
-                        yft40_rust_hash::YFT::new(values.0.into_iter().map(|v| u40::from(v)).collect(), args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log)
+                        match args.hash_map {
+                            0 => testyft40!(yft40_rust_hash::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
+                            1 => testyft40!(yft40_fx_hash::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
+                            2 => testyft40!(yft40_hash_brown::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
+                            3 => testyft40!(yft40_im_hash::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
+                            _ => panic!("Invalid input for argument hash_map")
+                        }
                     }
                 };
-
-                log.log_mem("initialized").log_time("initialized");
-
-                //load queries & aply them, if option is set
-                if let Some(ref file) = args.queries {
-                    let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
-                    if let Some(ref output) = args.output {
-                        let predecessors = &test_values.into_iter().map(|v| usize::from(yft.predecessor(u40::from(v)).unwrap_or(u40::from(0)))).collect();
-                        if let Err(e) = nmbrsrc::save(predecessors, output.to_str().unwrap()) {
-                            dbg!(e);
-                        }
-                    } else {
-                        let _: Vec<usize> = test_values.into_iter().map(|v| usize::from(yft.predecessor(u40::from(v)).unwrap_or(u40::from(0)))).collect(); //TODO time
-                    }
-                    log.log_time("queries processed");
-                }
-                if args.memory {
-                    yft.print_stats(&log);
-                }
             } else {//TODO direkt args mitgeben?
                 let yft = YFT::new(values.0, args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log);
 
