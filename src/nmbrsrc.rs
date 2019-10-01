@@ -8,6 +8,7 @@ use self::rand_distr::{Poisson, Normal, Distribution};
 use std::fs::File;
 use self::serde::{Serialize, Deserialize};
 use self::rmps::{Serializer, Deserializer};
+use uint::u40;
 
 //TODO Filter duplicates?
 
@@ -88,5 +89,13 @@ pub fn load(path: &str) -> std::io::Result<Vec<usize>> {
     let input = File::open(path)?;
     let mut deserializer = Deserializer::new(input);
     let values: Vec<usize> = Deserialize::deserialize(&mut deserializer).unwrap();
+    Ok(values)
+}
+
+
+pub fn load_u40(path: &str) -> std::io::Result<Vec<u40>> {
+    let input = File::open(path)?;
+    let mut deserializer = Deserializer::new(input);
+    let values: Vec<u40> = Deserialize::deserialize(&mut deserializer).unwrap();
     Ok(values)
 }

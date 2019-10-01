@@ -13,7 +13,9 @@ use structopt::StructOpt;
 use uint::u40;
 
 pub mod yft64;
-pub mod yft40;
+pub mod yft40_rust_hash;
+pub mod yft40_fx_hash;
+pub mod yft40_hash_brown;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
@@ -22,25 +24,28 @@ pub mod log;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "YFT", about = "Test Implementation of Dan Willard's Y-Fast-Trie")]
 struct Args {
-    //    /// A file where a gnuplot should be made to
-//    #[structopt(short, long, parse(from_os_str))]
-//    gnuplot: Option<PathBuf>, //TODO
-    /// Deviation that should be used to generate the Y-Fast-Trie Input.
-    /// Alternately use load command
+    /// Source, where values should come from.
+    /// Either a Distribution that should be used to generate the Y-Fast-Trie Input or a file to load them.
     #[structopt(subcommand)]
-    dist: Option<Distribution>,
+    values: ValueSrc,
     /// Minimal height of lowest lss level
     #[structopt(short = "a", long, default_value = "10")]
     min_start_level: usize,
     /// Use binary search instead of Y-Fast-Trie
     #[structopt(short, long)]
     bin_search: bool,
+    /// Evaluate the predecessor search steps; not compatible with u40 or output at this momement.
+    #[structopt(short = "d", long)]
+    search_stats: bool,
     /// Run multiple times, each time with half much elements than before
     #[structopt(short, long)]
     element_length_test: bool,
-    /// A file with ordered Numbers to create the Y-Fast-Trie
-    #[structopt(short, long, parse(from_os_str))]
-    load: Option<PathBuf>,
+    /// Hashmap that should be use. Only usable with u40 Option. Not compatible with values Option.
+    /// 0 = std
+    /// 1 = Fx
+    /// 2 = Hashbrown
+    #[structopt(short, long, default_value = "1")]
+    hash_map: usize,
     /// Log memory usage
     #[structopt(short, long)]
     memory: bool,
@@ -77,12 +82,12 @@ struct Args {
     /// Maximum number of lss levels
     #[structopt(short = "z", long, default_value = "8")]
     max_lss_level: usize,
-} //TODO am anfang einmal (ohne result) ausgeben, spart das nervige ändern der batchdatei
+}
 
 // arg subcommand for number generation
 #[derive(Debug)] //this should not be necessary
 #[derive(StructOpt)]
-enum Distribution {
+enum ValueSrc {
     Normal {
         length: usize,
         mean: usize,
@@ -99,8 +104,17 @@ enum Distribution {
         length: usize,
         n: f64,
     },
+    /// A file with ordered Numbers to create the Y-Fast-Trie
+    Load {
+        #[structopt(parse(from_os_str))]
+        path: PathBuf,
+    },
+    /// A file with ordered u40 Numbers to create the Y-Fast-Trie
+    U40 {
+        #[structopt(parse(from_os_str))]
+        path: PathBuf,
+    },
 }
-
 
 fn main() {
     let args = Args::from_args();
@@ -126,44 +140,53 @@ fn main() {
 
 
     for i in 0..40 { //for element length test, else ignored //TODO change log
-        //create yft input
-        let mut values =
-            if let Some(ref file) = args.load {
-                nmbrsrc::load(file.to_str().unwrap()).unwrap()
-            } else {
-                if let Some(ref distribution) = args.dist {
-                    match distribution {
-                        Distribution::Normal { length, mean, deviation } => {
-                            nmbrsrc::get_normal_dist(*length, *mean as f64, *deviation as f64)
-                        }
-                        Distribution::Uniform { length } => {
-                            nmbrsrc::get_uniform_dist(*length)
-                        }
-                        Distribution::Poisson { length, lambda } => {
-                            nmbrsrc::get_poisson_dist(*length, *lambda)
-                        }
-                        Distribution::PowerLaw { length, n } => {
-                            nmbrsrc::get_power_law_dist(*length, *n)
-                        }
-                    }
-                } else {
-                    panic!("Distribution or input File required!");
+        //create yft input (u64, u40)
+        let mut values: (Vec<usize>, Vec<u40>) =
+            match &args.values {
+                ValueSrc::Normal { length, mean, deviation } => {
+                    (nmbrsrc::get_normal_dist(*length, *mean as f64, *deviation as f64), Vec::new())
+                }
+                ValueSrc::Uniform { length } => {
+                    (nmbrsrc::get_uniform_dist(*length), Vec::new())
+                }
+                ValueSrc::Poisson { length, lambda } => {
+                    (nmbrsrc::get_poisson_dist(*length, *lambda), Vec::new())
+                }
+                ValueSrc::PowerLaw { length, n } => {
+                    (nmbrsrc::get_power_law_dist(*length, *n), Vec::new())
+                }
+                ValueSrc::Load { path } => {
+                    (nmbrsrc::load(path.to_str().unwrap()).unwrap(), Vec::new())
+                }
+                ValueSrc::U40 { path } => {
+                    (Vec::new(), nmbrsrc::load_u40(path.to_str().unwrap()).unwrap())
                 }
             };
 
 
         //save input if option is set
         if let Some(ref file) = args.store {
-            if let Err(e) = nmbrsrc::save(&values, file.to_str().unwrap()) {
+            //generated values are alway u64
+            if let Err(e) = nmbrsrc::save(&values.0, file.to_str().unwrap()) {
                 dbg!(e);
             }
         }
 
         if args.element_length_test && i > 0 {
-            //half number of elements
-            values = values.iter().step_by(2usize.pow(i)).map(|v| v.clone()).collect();
-            if values.len() < 2 {
-                break;
+            //decrease number of elements
+            match args.values {
+                ValueSrc::U40 { path: _ } => {
+                    values = (values.0, values.1.iter().step_by(2usize.pow(i)).map(|v| v.clone()).collect());
+                    if values.1.len() < 2 {
+                        break;
+                    }
+                }
+                _ => {
+                    values = (values.0.iter().step_by(2usize.pow(i)).map(|v| v.clone()).collect(), values.1);
+                    if values.0.len() < 2 {
+                        break;
+                    }
+                }
             }
             //log is not used between begin of for loop and here -> no problems
             log.inc_run_number();
@@ -175,22 +198,29 @@ fn main() {
             if args.bin_search {
                 log.log_mem("initialized").log_time("initialized");
                 //print stats
-                log.print_result(format!("level=-1\telements={}", values.len()));
+                log.print_result(format!("level=-1\telements={}", values.0.len()));
                 //load queries & aply them, if option is set
                 if let Some(ref file) = args.queries {
                     let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
                     if let Some(ref output) = args.output {
-                        let predecessors = &test_values.into_iter().map(|v| bin_search_pred(&values, v).unwrap_or(0)).collect();
+                        let predecessors = &test_values.into_iter().map(|v| bin_search_pred(&values.0, v).unwrap_or(0)).collect();
                         if let Err(e) = nmbrsrc::save(predecessors, output.to_str().unwrap()) {
                             dbg!(e);
                         }
                     } else {
-                        let _: Vec<usize> = test_values.into_iter().map(|v| bin_search_pred(&values, v).unwrap_or(0)).collect();
+                        let _: Vec<usize> = test_values.into_iter().map(|v| bin_search_pred(&values.0, v).unwrap_or(0)).collect();
                     }
                     log.log_time("queries processed");
                 }
-            } else if args.u40 {//TODO direkt args mitgeben?
-                let yft = yft40::YFT::new(values.into_iter().map(|v| u40::from(v)).collect(), args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log);
+            } else if args.u40 {
+                let yft = match args.values {
+                    ValueSrc::U40 { path: _ } => {
+                        yft40_rust_hash::YFT::new(values.1, args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log)
+                    }
+                    _ => {
+                        yft40_rust_hash::YFT::new(values.0.into_iter().map(|v| u40::from(v)).collect(), args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log)
+                    }
+                };
 
                 log.log_mem("initialized").log_time("initialized");
 
@@ -210,8 +240,8 @@ fn main() {
                 if args.memory {
                     yft.print_stats(&log);
                 }
-            } else {
-                let yft = YFT::new(values, args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log);
+            } else {//TODO direkt args mitgeben?
+                let yft = YFT::new(values.0, args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log);
 
                 log.log_mem("initialized").log_time("initialized");
 
@@ -224,7 +254,11 @@ fn main() {
                             dbg!(e);
                         }
                     } else {
-                        let _: Vec<usize> = test_values.into_iter().map(|v| yft.predecessor(v).unwrap_or(0)).collect();
+                        if args.search_stats {
+                            let _: Vec<usize> = test_values.into_iter().map(|v| yft.predecessor_with_stats(v, &log).unwrap_or(0)).collect();
+                        } else {
+                            let _: Vec<usize> = test_values.into_iter().map(|v| yft.predecessor(v).unwrap_or(0)).collect();
+                        }
                     }
                     log.log_time("queries processed");
                 }

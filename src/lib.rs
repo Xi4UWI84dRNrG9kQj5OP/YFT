@@ -11,7 +11,7 @@ pub use yft64::YFT;
 //use structopt::StructOpt;
 
 pub mod yft64;
-pub mod yft40;
+pub mod yft40_rust_hash;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;

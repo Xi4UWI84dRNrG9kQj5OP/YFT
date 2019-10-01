@@ -14,12 +14,11 @@ the leafs descending from v will have key values
 between the quantities (i - 1)2^J + 1 and i* 2^J */
 
 pub struct YFT {
-    //position of successor of subtree in elementarray
+    //position of successor of subtree in element vec, 0 if None
     lss_top: Vec<DataType>,
-    //position of successor of subtree, 0 if None//TODO kommentar erläutern
+    // Position, node
     lss_leaf: FxHashMap<DataType, TreeLeaf>,
     lss_branch: Vec<FxHashMap<DataType, TreeBranch>>,
-    //TODO rustc-hash? perfekter hash?
     //== lss leaf level
     start_level: usize,
     //number of levels that are pooled into one level at the top of the xft
@@ -38,7 +37,7 @@ impl YFT {
         let levels = BIT_LENGTH - start_level - last_level_len;
 
         //initialise lss_top
-        let mut lss_top = vec![u40::from(0); 2usize.pow(last_level_len as u32)];
+        let mut lss_top = vec![DataType::from(0); 2usize.pow(last_level_len as u32)];
         for (pos, value) in elements.iter().enumerate() {
             //check array is sorted
             debug_assert!(pos == 0 || value >= &elements[pos - 1]);
@@ -47,7 +46,7 @@ impl YFT {
             let mut lss_top_pos = YFT::lss_top_position(value, last_level_len) as usize;
 
             //set successors
-            if !is_left_child(DataType::from(YFT::lss_top_position(value, last_level_len + 1))) {
+            if lss_top[lss_top_pos] == 0 && !is_left_child(DataType::from(YFT::lss_top_position(value, last_level_len + 1))) {
                 // for queries on left child of this top level element, this element is its successor
                 lss_top[lss_top_pos] = DataType::from(pos);
             }
