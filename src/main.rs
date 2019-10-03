@@ -19,6 +19,8 @@ pub mod yft40_hash_brown;
 pub mod yft40_im_hash;
 pub mod yft40_boomphf_hash;
 pub mod yft40_boomphf_hash_para;
+pub mod yft40_fx_hash_bottom_up_construction;
+pub mod yft40_fx_hash_capacity;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
@@ -50,6 +52,8 @@ struct Args {
     /// 3 = im-rc
     /// 4 = boomphf
     /// 5 = boomphf parallel construction
+    /// 6 = Fx bottom up construction
+    /// 7 = Fx capacity construction
     #[structopt(short, long, default_value = "1")]
     hash_map: usize,
     /// Log memory usage
@@ -259,6 +263,8 @@ fn main() {
                             3 => testyft40!(yft40_im_hash::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
                             4 => testyft40!(yft40_boomphf_hash::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
                             5 => testyft40!(yft40_boomphf_hash_para::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
+                            6 => testyft40!(yft40_fx_hash_bottom_up_construction::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
+                            7 => testyft40!(yft40_fx_hash_capacity::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
                             _ => panic!("Invalid input for argument hash_map")
                         }
                     }
