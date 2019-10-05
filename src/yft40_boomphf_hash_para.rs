@@ -62,7 +62,7 @@ impl YFT {
         let mut leaf_data = Vec::new();
         for (element_array_index, value) in elements.iter().enumerate() {
             let leaf_position = calc_path(*value, 0, start_level);
-            if keys.len()== 0 || keys[keys.len() - 1] != leaf_position {
+            if keys.len() == 0 || keys[keys.len() - 1] != leaf_position {
                 keys.push(leaf_position);
                 leaf_data.push(TreeLeaf { first_element: DataType::from(element_array_index) });
             }
@@ -300,16 +300,6 @@ struct TreeBranch {
 }
 
 impl TreeBranch {
-    fn set_child(&mut self, left: bool) {
-        if left {
-            debug_assert!(!self.has_left_child());
-        } else {
-            debug_assert!(!self.has_right_child());
-        }
-        self.children = Children::BOTH;
-        self.descending = DataType::from(0);
-    }
-
     fn has_left_child(&self) -> bool {
         self.children.contains(Children::LEFT)
     }

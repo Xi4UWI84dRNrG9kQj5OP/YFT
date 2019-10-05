@@ -30,7 +30,7 @@ pub struct YFT {
 impl YFT {
     ///elements must be sorted ascending!
     pub fn new(elements: Vec<DataType>, min_start_level: usize, min_start_level_load_factor: usize, max_lss_level: usize, max_last_level_load_factor: usize, log: &mut Log) -> YFT {
-        let (start_level, mut number_of_nodes) = YFT::calc_start_level(&elements, min_start_level, BIT_LENGTH - max_lss_level, min_start_level_load_factor);
+        let (start_level, number_of_nodes) = YFT::calc_start_level(&elements, min_start_level, BIT_LENGTH - max_lss_level, min_start_level_load_factor);
         log.log_time("start level calculated");
         let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, start_level, BIT_LENGTH - max_lss_level, max_last_level_load_factor);
         log.log_time("number of top levels calculated");
@@ -150,7 +150,6 @@ impl YFT {
 
     fn calc_lss_top_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize, max_load_factor: usize) -> usize {
         let mut range = (min_start_level + 1, max_lss_level);
-        let mut nodes = 0;
         while range.0 < range.1 {
             let candidate = (range.0 + range.1) / 2;
             if YFT::calc_nodes_in_level(candidate, elements) / max_load_factor < 2usize.pow((BIT_LENGTH - candidate) as u32) / 100 {

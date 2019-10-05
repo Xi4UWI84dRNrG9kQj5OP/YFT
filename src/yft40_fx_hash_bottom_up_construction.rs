@@ -291,16 +291,6 @@ struct TreeBranch {
 }
 
 impl TreeBranch {
-    fn set_child(&mut self, left: bool) {
-        if left {
-            debug_assert!(!self.has_left_child());
-        } else {
-            debug_assert!(!self.has_right_child());
-        }
-        self.children = Children::BOTH;
-        self.descending = DataType::from(0);
-    }
-
     fn has_left_child(&self) -> bool {
         self.children.contains(Children::LEFT)
     }
