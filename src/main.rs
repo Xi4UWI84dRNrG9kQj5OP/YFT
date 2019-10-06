@@ -5,6 +5,7 @@ extern crate structopt;
 extern crate bitflags;
 extern crate uint;
 extern crate stats_alloc;
+extern crate im_rc;
 
 
 pub use yft64::YFT;
@@ -287,7 +288,17 @@ fn main() {
                         }
                     } else {
                         if args.search_stats {
-                            let _: Vec<usize> = test_values.into_iter().map(|v| yft.predecessor_with_stats(v, &log).unwrap_or(0)).collect();
+                            let mut stats = vec![vec![0; 43]; 43];
+                            let _: Vec<usize> = test_values.into_iter().map(|v| {
+                                let (r, e, c) = yft.predecessor_with_stats(v);
+                                stats[e as usize][c as usize] += 1;
+                                r.unwrap_or(0)
+                            }).collect();
+                            for e in 0..43 {
+                                for c in 0..43 {
+                                    log.print_result(format!("Exit Point={}\tNumber of Bin Search Steps={}\tfrequency={}", e, c, stats[e][c]));
+                                }
+                            }
                         } else {
                             let _: Vec<usize> = test_values.into_iter().map(|v| yft.predecessor(v).unwrap_or(0)).collect();
                         }

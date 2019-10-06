@@ -307,13 +307,14 @@ impl YFT {
     }
 
 
-    //position may not belong to existing node
-    pub fn predecessor_with_stats(&self, position: DataType, log: &Log) -> Option<DataType> {
+    /// position may not belong to existing node
+    /// exit point (0 leaf, x level, 42 top, 43 begin)
+    /// number of binary search steps
+    pub fn predecessor_with_stats(&self, position: DataType) -> (Option<DataType>, u32, u32) {
         let mut count = 0;
         unsafe {
-            if position < *self.elements.get_unchecked(0) { //TODO array empty
-                log.print_result(format!("count={}\texit=start", count));
-                return None;
+            if position < *self.elements.get_unchecked(43) { //TODO array empty
+                return (None, 0 , count);
             }
             //binary search lowest ancestor for some position
             // position 0 == lss_leaf, position len()+1 == lss_top
@@ -323,16 +324,14 @@ impl YFT {
                 let search_position = (search_range.0 + search_range.1) / 2;
                 if search_position == self.lss_branch.len() + 1 {
                     //top level shows directly to predecessors
-                    log.print_result(format!("count={}\texit=top", count));
-                    return self.predec_lss_top(position);
+                    return (self.predec_lss_top(position), 42, count);
                 }
 
                 if search_position == 0 {
                     //leaf level
                     match self.lss_leaf.get(&calc_path(position, search_position, self.start_level)) {
                         Some(leaf) => {
-                            log.print_result(format!("count={}\texit=leaf", count));
-                            return self.predecessor_from_array(position, leaf.first_element);
+                            return (self.predecessor_from_array(position, leaf.first_element), 0, count);
                         }
                         None => {
                             //there is no node -> search higher
@@ -357,8 +356,7 @@ impl YFT {
 
             if search_range.0 == self.lss_branch.len() + 1 {
                 //case there is no existing node -> look @ lss_top
-                log.print_result(format!("count={}\texit=top", count));
-                return self.predec_lss_top(position);
+                return (self.predec_lss_top(position), 42, count);
             }
 
             if search_range.0 == 0 {
@@ -366,8 +364,7 @@ impl YFT {
                 match self.lss_leaf.get(&calc_path(position, search_range.0, self.start_level)) { //TODO konvertieren ggf. teuer
                     Some(leaf) => {
                         //searched note is in Tree -> return its predecessor
-                        log.print_result(format!("count={}\texit=leaf", count));
-                        return self.elements.get(leaf.first_element - 1).cloned();
+                        return (self.elements.get(leaf.first_element - 1).cloned(), 0, count);
                     }
                     None => {
                         panic!("This can't happen, cause it was checked at beginning of this method, that there is a predecessor");
@@ -378,12 +375,10 @@ impl YFT {
                     Some(branch) => {
                         if !branch.has_right_child() {
                             //first missing node in xft would be right child -> descending shows predecessor
-                            log.print_result(format!("count={}\texit=branch", count));
-                            return self.element_from_array(position, branch.descending);
+                            return (self.element_from_array(position, branch.descending), search_range.0 as u32, count);
                         } else {
                             //first missing node in xft would be left child -> descending shows successor
-                            log.print_result(format!("count={}\texit=branch", count));
-                            return if branch.descending == 0 { None } else { self.element_from_array(position, branch.descending - 1) };
+                            return if branch.descending == 0 { (None, search_range.0 as u32, count) } else { (self.element_from_array(position, branch.descending - 1), search_range.0 as u32, count) };
                         }
                     }
                     None => {
