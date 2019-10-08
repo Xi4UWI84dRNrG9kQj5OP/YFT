@@ -9,6 +9,7 @@ use std::fs::File;
 use self::serde::{Serialize, Deserialize};
 use self::rmps::{Serializer, Deserializer};
 use uint::u40;
+use std::io::Read;
 
 //TODO Filter duplicates?
 
@@ -55,8 +56,8 @@ pub fn get_power_law_dist(length: usize, n: f64) -> Vec<usize> {
     let subterm_1 = x1.powf(n + 1.) - subterm_0;
     let subterm_2 = 1. / (n + 1.);
     for _ in 0..length {
-        let y : f64 = rng.gen();
-        let subterm_3 : f64 = subterm_1 * y + subterm_0;
+        let y: f64 = rng.gen();
+        let subterm_3: f64 = subterm_1 * y + subterm_0;
         vec.push(subterm_3.powf(subterm_2) as usize);
     }
     vec.sort();
@@ -92,10 +93,33 @@ pub fn load(path: &str) -> std::io::Result<Vec<usize>> {
     Ok(values)
 }
 
-
-pub fn load_u40(path: &str) -> std::io::Result<Vec<u40>> {
+pub fn load_u40_serialized(path: &str) -> std::io::Result<Vec<u40>> {
     let input = File::open(path)?;
     let mut deserializer = Deserializer::new(input);
     let values: Vec<u40> = Deserialize::deserialize(&mut deserializer).unwrap();
+    Ok(values)
+}
+
+pub fn load_u40_fit(path: &str) -> std::io::Result<Vec<u40>> {
+    let mut input = File::open(path)?;
+    let number_of_values = std::fs::metadata("foo.txt")?.len() as usize / 5;
+    let mut values: Vec<u40> = vec![u40::from(0); number_of_values];
+    let mut i = 0;
+    loop {
+        i += 1;
+        let mut buffer = Vec::new();
+        // read at most 5 bytes
+        input.by_ref().take(5).read_to_end(&mut buffer)?;
+        if buffer.len() < 5 {
+            if buffer.len() > 0 {
+                println!("Last Buffer: {:?}", buffer);
+            }
+            break;
+        }
+        let u40: u64 = buffer[0] as u64 | ((buffer[1] as u64) << 8) | ((buffer[2] as u64) << 16) | ((buffer[3] as u64) << 24) | ((buffer[4] as u64) << 32);
+        values.push(u40::from(u40));
+        debug_assert!(values.len() < 2 || values[values.len() - 2] < values[values.len() - 1]);
+    }
+    debug_assert!(i == number_of_values);
     Ok(values)
 }

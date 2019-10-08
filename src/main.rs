@@ -172,7 +172,7 @@ fn main() {
                     (nmbrsrc::load(path.to_str().unwrap()).unwrap(), Vec::new())
                 }
                 ValueSrc::U40 { path } => {
-                    (Vec::new(), nmbrsrc::load_u40(path.to_str().unwrap()).unwrap())
+                    (Vec::new(), nmbrsrc::load_u40_fit(path.to_str().unwrap()).unwrap())
                 }
             };
 
@@ -254,25 +254,28 @@ fn main() {
                     };
                 }
 
-                match args.values {
-                    ValueSrc::U40 { path: _ } => {
-                        testyft40!(yft40_rust_hash::YFT; values.1);
-                    }
-                    _ => {
-                        match args.hash_map {
-                            0 => testyft40!(yft40_rust_hash::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
-                            1 => testyft40!(yft40_fx_hash::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
-                            2 => testyft40!(yft40_hash_brown::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
-                            3 => testyft40!(yft40_im_hash::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
-                            4 => testyft40!(yft40_boomphf_hash::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
-                            5 => testyft40!(yft40_boomphf_hash_para::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
-                            6 => testyft40!(yft40_fx_hash_bottom_up_construction::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
-                            7 => testyft40!(yft40_fx_hash_capacity::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
-                            8 => testyft40!(yft40_fx_hash_no_level::YFT; values.0.into_iter().map(|v| u40::from(v)).collect()),
-                            _ => panic!("Invalid input for argument hash_map")
+                let values =
+                    match args.values {
+                        ValueSrc::U40 { path: _ } => {
+                            values.1
                         }
-                    }
-                };
+                        _ => {
+                            values.0.into_iter().map(|v| u40::from(v)).collect()
+                        }
+                    };
+
+                match args.hash_map {
+                    0 => testyft40!(yft40_rust_hash::YFT; values),
+                    1 => testyft40!(yft40_fx_hash::YFT; values),
+                    2 => testyft40!(yft40_hash_brown::YFT; values),
+                    3 => testyft40!(yft40_im_hash::YFT; values),
+                    4 => testyft40!(yft40_boomphf_hash::YFT; values),
+                    5 => testyft40!(yft40_boomphf_hash_para::YFT; values),
+                    6 => testyft40!(yft40_fx_hash_bottom_up_construction::YFT; values),
+                    7 => testyft40!(yft40_fx_hash_capacity::YFT; values),
+                    8 => testyft40!(yft40_fx_hash_no_level::YFT; values),
+                    _ => panic!("Invalid input for argument hash_map")
+                }
             } else {//TODO direkt args mitgeben?
                 let yft = YFT::new(values.0, args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log);
 
