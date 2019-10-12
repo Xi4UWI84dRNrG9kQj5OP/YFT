@@ -93,20 +93,28 @@ pub fn load(path: &str) -> std::io::Result<Vec<usize>> {
     Ok(values)
 }
 
+pub fn load_u64_serialized(path: &str) -> std::io::Result<Vec<usize>> {
+    let input = File::open(path)?;
+    let mut deserializer = Deserializer::new(input);
+    let values: Vec<u64> = Deserialize::deserialize(&mut deserializer).unwrap();
+    dbg!(values.len());
+    Ok(values.into_iter().map(|v| v as usize).collect())
+}
+
 pub fn load_u40_serialized(path: &str) -> std::io::Result<Vec<u40>> {
     let input = File::open(path)?;
     let mut deserializer = Deserializer::new(input);
     let values: Vec<u40> = Deserialize::deserialize(&mut deserializer).unwrap();
+    dbg!(values.len());
     Ok(values)
 }
 
 pub fn load_u40_fit(path: &str) -> std::io::Result<Vec<u40>> {
     let mut input = File::open(path)?;
-    let number_of_values = std::fs::metadata("foo.txt")?.len() as usize / 5;
+    let number_of_values = std::fs::metadata(path)?.len() as usize / 5;
     let mut values: Vec<u40> = vec![u40::from(0); number_of_values];
     let mut i = 0;
     loop {
-        i += 1;
         let mut buffer = Vec::new();
         // read at most 5 bytes
         input.by_ref().take(5).read_to_end(&mut buffer)?;
@@ -117,9 +125,11 @@ pub fn load_u40_fit(path: &str) -> std::io::Result<Vec<u40>> {
             break;
         }
         let u40: u64 = buffer[0] as u64 | ((buffer[1] as u64) << 8) | ((buffer[2] as u64) << 16) | ((buffer[3] as u64) << 24) | ((buffer[4] as u64) << 32);
-        values.push(u40::from(u40));
+        values[i] = u40::from(u40);
         debug_assert!(values.len() < 2 || values[values.len() - 2] < values[values.len() - 1]);
+        i += 1;
     }
+    dbg!(values.len());
     debug_assert!(i == number_of_values);
     Ok(values)
 }

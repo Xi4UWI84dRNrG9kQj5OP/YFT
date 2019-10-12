@@ -12,6 +12,7 @@ pub use yft64::YFT;
 use std::path::PathBuf;
 use structopt::StructOpt;
 use uint::u40;
+use std::collections::BTreeSet;
 
 pub mod yft64;
 pub mod yft40_rust_hash;
@@ -41,6 +42,9 @@ struct Args {
     /// Use binary search instead of Y-Fast-Trie
     #[structopt(short, long)]
     bin_search: bool,
+    /// Use btree instead of Y-Fast-Trie
+    #[structopt(short = "c", long)]
+    btree: bool,
     /// Evaluate the predecessor search steps; not compatible with u40 or output at this momement.
     #[structopt(short = "d", long)]
     search_stats: bool,
@@ -122,8 +126,19 @@ enum ValueSrc {
         #[structopt(parse(from_os_str))]
         path: PathBuf,
     },
-    /// A file with ordered u40 Numbers to create the Y-Fast-Trie
+    /// A file with ordered u40 Numbers and no separators to create the Y-Fast-Trie
     U40 {
+        #[structopt(parse(from_os_str))]
+        path: PathBuf,
+    },
+    /// A file with ordered u40 Numbers to create the Y-Fast-Trie
+    /// Values have to be created with -s option
+    U40S {
+        #[structopt(parse(from_os_str))]
+        path: PathBuf,
+    },
+    /// A file with ordered u64 Numbers to create the Y-Fast-Trie
+    U64S {
         #[structopt(parse(from_os_str))]
         path: PathBuf,
     },
@@ -171,8 +186,14 @@ fn main() {
                 ValueSrc::Load { path } => {
                     (nmbrsrc::load(path.to_str().unwrap()).unwrap(), Vec::new())
                 }
+                ValueSrc::U64S { path } => {
+                    (nmbrsrc::load_u64_serialized(path.to_str().unwrap()).unwrap(), Vec::new())
+                }
                 ValueSrc::U40 { path } => {
                     (Vec::new(), nmbrsrc::load_u40_fit(path.to_str().unwrap()).unwrap())
+                }
+                ValueSrc::U40S { path } => {
+                    (Vec::new(), nmbrsrc::load_u40_serialized(path.to_str().unwrap()).unwrap())
                 }
             };
 
@@ -188,7 +209,7 @@ fn main() {
         if args.element_length_test && i > 0 {
             //decrease number of elements
             match args.values {
-                ValueSrc::U40 { path: _ } => {
+                ValueSrc::U40 { path: _ } | ValueSrc::U40S { path: _ } => {
                     values = (values.0, values.1.iter().step_by(2usize.pow(i)).map(|v| v.clone()).collect());
                     if values.1.len() < 2 {
                         break;
@@ -210,8 +231,10 @@ fn main() {
         {
             if args.bin_search {
                 log.log_mem("initialized").log_time("initialized");
+
                 //print stats
                 log.print_result(format!("level=-1\telements={}", values.0.len()));
+
                 //load queries & aply them, if option is set
                 if let Some(ref file) = args.queries {
                     let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
@@ -222,6 +245,26 @@ fn main() {
                         }
                     } else {
                         let _: Vec<usize> = test_values.into_iter().map(|v| bin_search_pred(&values.0, v).unwrap_or(0)).collect();
+                    }
+                    log.log_time("queries processed");
+                }
+            } else if args.btree {
+                let set = &(&values.0).into_iter().fold(BTreeSet::new(), |mut set, value| {set.insert(value.clone()); set});
+                log.log_mem("initialized").log_time("initialized");
+
+                //print stats
+                log.print_result(format!("level=-1\telements={}", values.0.len()));
+
+                //load queries & aply them, if option is set
+                if let Some(ref file) = args.queries {
+                    let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
+                    if let Some(ref output) = args.output {
+                        let predecessors = &test_values.into_iter().map(|v| btree_search_pred(set, v).unwrap_or(0)).collect();
+                        if let Err(e) = nmbrsrc::save(predecessors, output.to_str().unwrap()) {
+                            dbg!(e);
+                        }
+                    } else {
+                        let _: Vec<usize> = test_values.into_iter().map(|v| btree_search_pred(set, v).unwrap_or(0)).collect();
                     }
                     log.log_time("queries processed");
                 }
@@ -256,7 +299,7 @@ fn main() {
 
                 let values =
                     match args.values {
-                        ValueSrc::U40 { path: _ } => {
+                        ValueSrc::U40 { path: _ } | ValueSrc::U40S { path: _ } => {
                             values.1
                         }
                         _ => {
@@ -299,7 +342,7 @@ fn main() {
                             }).collect();
                             for e in 0..43 {
                                 for c in 0..43 {
-                                    log.print_result(format!("Exit Point={}\tNumber of Bin Search Steps={}\tfrequency={}", e, c, stats[e][c]));
+                                    log.print_result(format!("Exit={}\tSearchSteps={}\tfrequency={}", e, c, stats[e][c]));
                                 }
                             }
                         } else {
@@ -322,7 +365,6 @@ fn main() {
     log.log_mem("end");
 }
 
-
 ///binary search predecessor
 fn bin_search_pred(element_list: &Vec<usize>, element: usize) -> Option<usize> {
     let mut l = 0;
@@ -342,4 +384,9 @@ fn bin_search_pred(element_list: &Vec<usize>, element: usize) -> Option<usize> {
     } else {
         None
     }
+}
+
+///search predecessor with BTree
+fn btree_search_pred(set: &BTreeSet<usize>, element: usize) -> Option<usize> {
+    Some(*set.range(0..element).last()?)
 }

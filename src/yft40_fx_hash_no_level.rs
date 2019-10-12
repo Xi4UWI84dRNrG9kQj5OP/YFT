@@ -40,7 +40,6 @@ impl YFT {
                 lss_top[lss_top_pos] = DataType::from(pos);
             }
         }
-        log.log_mem("initialized").log_time("initialized");
 
         //return
         YFT { lss_top, last_level_len, elements }
