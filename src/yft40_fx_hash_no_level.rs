@@ -55,7 +55,7 @@ impl YFT {
         let mut range = (min_start_level + 1, max_lss_level);
         while range.0 < range.1 {
             let candidate = (range.0 + range.1) / 2;
-            if YFT::calc_nodes_in_level(candidate, elements) / max_load_factor < 2usize.pow((BIT_LENGTH - candidate) as u32) / 100 {
+            if YFT::calc_nodes_in_level(candidate, elements) / (max_load_factor as f64) < 2f64.powf((BIT_LENGTH - candidate) as f64) / 100. {
                 range = (candidate + 1, range.1)
             } else {
                 range = (range.0, candidate)
@@ -65,13 +65,13 @@ impl YFT {
     }
 
     ///count how many nodes are in one level
-    fn calc_nodes_in_level(level: usize, elements: &Vec<DataType>) -> usize { //TODO mögliche Beschleunigung durch Stichproben
+    fn calc_nodes_in_level(level: usize, elements: &Vec<DataType>) -> f64 { //TODO mögliche Beschleunigung durch Stichproben
         let mut last_val = calc_path(elements[0], level, 0);
-        let mut count = 1;
+        let mut count = 1.;
         for value in elements {
             let new_val = calc_path(*value, level, 0);
             if new_val != last_val {
-                count += 1;
+                count += 1.;
                 last_val = new_val;
             }
         }
