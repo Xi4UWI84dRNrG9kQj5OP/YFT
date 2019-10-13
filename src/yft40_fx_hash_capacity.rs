@@ -109,9 +109,6 @@ impl YFT {
             }
 
             predecessor_x_leaf = Some(x_leaf_position as DataType);
-            if element_array_index % 1000000 == 0 {
-                log.log_mem(format!("element {} pushed to lss_branch", element_array_index).as_str()).log_time(format!("element {} pushed to lss_branch", element_array_index).as_str());
-            }
         }
 
         //return
