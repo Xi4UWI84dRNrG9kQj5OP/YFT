@@ -45,7 +45,7 @@ struct Args {
     /// Use btree instead of Y-Fast-Trie
     #[structopt(short = "c", long)]
     btree: bool,
-    /// Evaluate the predecessor search steps; not compatible with u40 or output at this momement.
+    /// Evaluate the predecessor search steps
     #[structopt(short = "d", long)]
     search_stats: bool,
     /// Run multiple times, each time with half much elements than before
@@ -149,8 +149,8 @@ fn main() {
     println!("{:?}", args);
 
     let mut log =
-        if let Some(name) = args.run_name {
-            log::Log::new(name)
+        if let Some(name) = &args.run_name {
+            log::Log::new(name.to_string())
         } else {
             log::Log::new(nmbrsrc::get_uniform_dist(1)[0].to_string())
         };
@@ -230,30 +230,36 @@ fn main() {
 
         {
             if args.bin_search {
+                let values = get_usize_values(&args, values);
+
                 log.log_mem("initialized").log_time("initialized");
 
                 //print stats
-                log.print_result(format!("level=-1\telements={}", values.0.len()));
+                log.print_result(format!("level=-1\telements={}", values.len()));
 
                 //load queries & aply them, if option is set
                 if let Some(ref file) = args.queries {
                     let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
                     if let Some(ref output) = args.output {
-                        let predecessors = &test_values.into_iter().map(|v| bin_search_pred(&values.0, v).unwrap_or(0)).collect();
+                        let predecessors = &test_values.into_iter().map(|v| bin_search_pred(&values, v).unwrap_or(0)).collect();
                         if let Err(e) = nmbrsrc::save(predecessors, output.to_str().unwrap()) {
                             dbg!(e);
                         }
                     } else {
-                        let _: Vec<usize> = test_values.into_iter().map(|v| bin_search_pred(&values.0, v).unwrap_or(0)).collect();
+                        let _: Vec<usize> = test_values.into_iter().map(|v| bin_search_pred(&values, v).unwrap_or(0)).collect();
                     }
                     log.log_time("queries processed");
                 }
             } else if args.btree {
-                let set = &(&values.0).into_iter().fold(BTreeSet::new(), |mut set, value| {set.insert(value.clone()); set});
+                let values = get_usize_values(&args, values);
+                let set = &(&values).into_iter().fold(BTreeSet::new(), |mut set, value| {
+                    set.insert(value.clone());
+                    set
+                });
                 log.log_mem("initialized").log_time("initialized");
 
                 //print stats
-                log.print_result(format!("level=-1\telements={}", values.0.len()));
+                log.print_result(format!("level=-1\telements={}", values.len()));
 
                 //load queries & aply them, if option is set
                 if let Some(ref file) = args.queries {
@@ -286,7 +292,7 @@ fn main() {
                                         dbg!(e);
                                     }
                                 } else {
-                                    let _: Vec<usize> = test_values.into_iter().map(|v| usize::from(yft.predecessor(u40::from(v)).unwrap_or(u40::from(0)))).collect(); //TODO time
+                                    let _: Vec<usize> = test_values.into_iter().map(|v| usize::from(yft.predecessor(u40::from(v)).unwrap_or(u40::from(0)))).collect();
                                 }
                                 log.log_time("queries processed");
                             }
@@ -319,8 +325,8 @@ fn main() {
                     8 => testyft40!(yft40_fx_hash_no_level::YFT; values),
                     _ => panic!("Invalid input for argument hash_map")
                 }
-            } else {//TODO direkt args mitgeben?
-                let yft = YFT::new(values.0, args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log);
+            } else {
+                let yft = YFT::new(get_usize_values(&args, values), args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log);
 
                 log.log_mem("initialized").log_time("initialized");
 
@@ -363,6 +369,19 @@ fn main() {
     }
     {} // end for
     log.log_mem("end");
+}
+
+fn get_usize_values(args: &Args, values: (Vec<usize>, Vec<u40>)) -> Vec<usize> {
+    let values =
+        match args.values {
+            ValueSrc::U40 { path: _ } | ValueSrc::U40S { path: _ } => {
+                values.1.into_iter().map(|v| u64::from(v) as usize).collect()
+            }
+            _ => {
+                values.0
+            }
+        };
+    values
 }
 
 ///binary search predecessor
