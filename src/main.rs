@@ -348,7 +348,9 @@ fn main() {
                             }).collect();
                             for e in 0..43 {
                                 for c in 0..43 {
-                                    log.print_result(format!("Exit={}\tSearchSteps={}\tfrequency={}", e, c, stats[e][c]));
+                                    if stats[e][c] > 0 {
+                                        log.print_result(format!("Exit={}\tSearchSteps={}\tfrequency={}", e, c, stats[e][c]));
+                                    }
                                 }
                             }
                         } else {
