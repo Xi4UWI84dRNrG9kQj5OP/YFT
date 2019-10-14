@@ -340,7 +340,7 @@ fn main() {
                         }
                     } else {
                         if args.search_stats {
-                            let mut stats = vec![vec![0; 43]; 43];
+                            let mut stats = vec![vec![0; 44]; 44];
                             let _: Vec<usize> = test_values.into_iter().map(|v| {
                                 let (r, e, c) = yft.predecessor_with_stats(v);
                                 stats[e as usize][c as usize] += 1;

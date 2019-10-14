@@ -144,9 +144,14 @@ impl YFT {
 
     fn calc_lss_top_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize, max_load_factor: usize) -> usize {
         let mut range = (min_start_level + 1, max_lss_level);
+        //load factor can only increase if level gets higher. If it doesn't, levels can be cut.
+        let max_load_factor =  YFT::calc_nodes_in_level(max_lss_level, elements) / 2f64.powf((BIT_LENGTH - max_lss_level) as f64);
         while range.0 < range.1 {
             let candidate = (range.0 + range.1) / 2;
-            if YFT::calc_nodes_in_level(candidate, elements) / (max_load_factor as f64) < 2f64.powf((BIT_LENGTH - candidate) as f64) / 100. {
+            let load_factor = YFT::calc_nodes_in_level(candidate, elements) / 2f64.powf((BIT_LENGTH - candidate) as f64);
+            //TODO next paramter
+            // we weant a load factor smaller then the max load factor and bigger then searched load factor
+            if load_factor < max_load_factor / 2. &&load_factor <  (max_load_factor as f64)/ 100. {
                 range = (candidate + 1, range.1)
             } else {
                 range = (range.0, candidate)
