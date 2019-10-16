@@ -1,5 +1,6 @@
 #![feature(allocator_api)]
 #![feature(shrink_to)]
+#[macro_use]
 extern crate structopt;
 #[macro_use]
 extern crate bitflags;
@@ -19,6 +20,7 @@ pub mod yft40_boomphf_hash;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
+pub mod args;
 
 #[cfg(test)]
 mod tests {

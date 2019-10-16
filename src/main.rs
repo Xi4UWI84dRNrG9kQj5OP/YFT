@@ -1,5 +1,6 @@
 #![feature(allocator_api)]
 #![feature(shrink_to)]
+#[macro_use]
 extern crate structopt;
 #[macro_use]
 extern crate bitflags;
@@ -9,10 +10,11 @@ extern crate im_rc;
 
 
 pub use yft64::YFT;
-use std::path::PathBuf;
 use structopt::StructOpt;
 use uint::u40;
 use std::collections::BTreeSet;
+use args::Args;
+use args::ValueSrc;
 
 pub mod yft64;
 pub mod yft40_rust_hash;
@@ -27,122 +29,7 @@ pub mod yft40_fx_hash_no_level;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
-
-/// Y-Fast-Trie Test Implementation
-#[derive(StructOpt, Debug)]
-#[structopt(name = "YFT", about = "Test Implementation of Dan Willard's Y-Fast-Trie")]
-struct Args {
-    /// Source, where values should come from.
-    /// Either a Distribution that should be used to generate the Y-Fast-Trie Input or a file to load them.
-    #[structopt(subcommand)]
-    values: ValueSrc,
-    /// Minimal height of lowest lss level
-    #[structopt(short = "a", long, default_value = "10")]
-    min_start_level: usize,
-    /// Use binary search instead of Y-Fast-Trie
-    #[structopt(short, long)]
-    bin_search: bool,
-    /// Use btree instead of Y-Fast-Trie
-    #[structopt(short = "c", long)]
-    btree: bool,
-    /// Evaluate the predecessor search steps
-    #[structopt(short = "d", long)]
-    search_stats: bool,
-    /// Run multiple times, each time with half much elements than before
-    #[structopt(short, long)]
-    element_length_test: bool,
-    /// Hashmap that should be use. Only usable with u40 Option. Not compatible with values Option.
-    /// 0 = std
-    /// 1 = Fx
-    /// 2 = Hashbrown
-    /// 3 = im-rc
-    /// 4 = boomphf
-    /// 5 = boomphf parallel construction
-    /// 6 = Fx bottom up construction
-    /// 7 = Fx capacity construction
-    /// 8 = Fx no level
-    #[structopt(short, long, default_value = "1")]
-    hash_map: usize,
-    /// Log memory usage
-    #[structopt(short, long)]
-    memory: bool,
-    /// Name of this run. Used for logging. If not set, a random number is used.
-    #[structopt(short = "n", long)]
-    run_name: Option<String>,
-    /// File where results should be saved to
-    /// If there is no predecessor, 0 will be printed
-    #[structopt(short, long, parse(from_os_str))]
-    output: Option<PathBuf>,
-    /// Print yft to outline
-    #[structopt(short, long)]
-    print: bool,
-    /// File with predecessor queries
-    #[structopt(short, long, parse(from_os_str))]
-    queries: Option<PathBuf>,
-    /// A file where randomly generated Values from this run should be saved to
-    #[structopt(short, long, parse(from_os_str))]
-    store: Option<PathBuf>,
-    /// Log time
-    #[structopt(short, long)]
-    time: bool,
-    /// Use 40 bit integer
-    #[structopt(short, long)]
-    u40: bool,
-    /// Minium Number of Elements in first lss level relative to the input in percentage (do not write the % char)
-    /// Must be beewtwin 1 and 100.
-    #[structopt(short = "x", long, default_value = "50")]
-    min_start_level_load_factor: usize,
-    /// Minium Number of Elements in first lss level relative to the input in percentage (do not write the % char)
-    /// Must be beewtwin 1 and 100.
-    #[structopt(short = "y", long, default_value = "90")]
-    max_last_level_load_factor: usize,
-    /// Maximum number of lss levels
-    #[structopt(short = "z", long, default_value = "8")]
-    max_lss_level: usize,
-}
-
-// arg subcommand for number generation
-#[derive(Debug)] //this should not be necessary
-#[derive(StructOpt)]
-enum ValueSrc {
-    Normal {
-        length: usize,
-        mean: usize,
-        deviation: usize,
-    },
-    Uniform {
-        length: usize,
-    },
-    Poisson {
-        length: usize,
-        lambda: f64,
-    },
-    PowerLaw {
-        length: usize,
-        n: f64,
-    },
-    /// A file with ordered Numbers to create the Y-Fast-Trie
-    Load {
-        #[structopt(parse(from_os_str))]
-        path: PathBuf,
-    },
-    /// A file with ordered u40 Numbers and no separators to create the Y-Fast-Trie
-    U40 {
-        #[structopt(parse(from_os_str))]
-        path: PathBuf,
-    },
-    /// A file with ordered u40 Numbers to create the Y-Fast-Trie
-    /// Values have to be created with -s option
-    U40S {
-        #[structopt(parse(from_os_str))]
-        path: PathBuf,
-    },
-    /// A file with ordered u64 Numbers to create the Y-Fast-Trie
-    U64S {
-        #[structopt(parse(from_os_str))]
-        path: PathBuf,
-    },
-}
+pub mod args;
 
 fn main() {
     let args = Args::from_args();
@@ -279,7 +166,7 @@ fn main() {
                 macro_rules! testyft40 {
                     (  $yft:ty; $values:expr ) => {
                         {
-                            let yft =  <$yft>::new($values, args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log);
+                            let yft =  <$yft>::new($values, &args, &mut log);
 
                             log.log_mem("initialized").log_time("initialized");
 
@@ -326,7 +213,7 @@ fn main() {
                     _ => panic!("Invalid input for argument hash_map")
                 }
             } else {
-                let yft = YFT::new(get_usize_values(&args, values), args.min_start_level, args.min_start_level_load_factor, args.max_lss_level, args.max_last_level_load_factor, &mut log);
+                let yft = YFT::new(get_usize_values(&args, values), &args, &mut log);
 
                 log.log_mem("initialized").log_time("initialized");
 

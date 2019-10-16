@@ -1,5 +1,6 @@
 extern crate rustc_hash;
 
+use args::Args;
 use log::Log;
 use uint::u40;
 use predecessor_set::PredecessorSet;
@@ -23,8 +24,8 @@ pub struct YFT {
 
 impl YFT {
     ///elements must be sorted ascending!
-    pub fn new(elements: Vec<DataType>, min_start_level: usize, _min_start_level_load_factor: usize, max_lss_level: usize, max_last_level_load_factor: usize, log: &mut Log) -> YFT {
-        let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, min_start_level, BIT_LENGTH - max_lss_level, max_last_level_load_factor);
+    pub fn new(elements: Vec<DataType>, args: &Args, log: &mut Log) -> YFT {
+        let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, args.min_start_level, BIT_LENGTH - args.max_lss_level, args.max_last_level_load_factor, args.min_load_factor_difference);
         log.log_time("number of top levels calculated");
 
         //initialise lss_top
@@ -51,11 +52,23 @@ impl YFT {
         log.print_result(format!("level=-1\tnodes={}\telements={}", 0, self.elements.len()));
     }
 
-    fn calc_lss_top_level(elements: &Vec<DataType>, min_start_level: usize, max_lss_level: usize, max_load_factor: usize) -> usize {
-        let mut range = (min_start_level + 1, max_lss_level);
+    ///start_level == lowest possible level
+    /// max_lss_level == highest possible level
+    /// max_load_factor == maximal percentage that a level should be filled with (between 0 and 100)
+    /// min_load_factor_difference == maximal factor that a level should be less relatively filled than the last possible level (between 0 and 100)
+    fn calc_lss_top_level(elements: &Vec<DataType>, start_level: usize, max_lss_level: usize, max_load_factor: usize, min_load_factor_difference: usize) -> usize {
+        let mut range = (start_level + 1, max_lss_level);
+        //load factor can only increase if level gets higher. If it doesn't, levels can be cut.
+        let top_load_factor = YFT::calc_nodes_in_level(max_lss_level, elements) / 2f64.powf((BIT_LENGTH - max_lss_level) as f64) * (min_load_factor_difference as f64) / 100.;
+         let max = if top_load_factor < (max_load_factor as f64) / 100. {
+            top_load_factor
+        } else {
+            (max_load_factor as f64) / 100.
+        };
         while range.0 < range.1 {
             let candidate = (range.0 + range.1) / 2;
-            if YFT::calc_nodes_in_level(candidate, elements) / (max_load_factor as f64) < 2f64.powf((BIT_LENGTH - candidate) as f64) / 100. {
+            let load_factor = YFT::calc_nodes_in_level(candidate, elements) / 2f64.powf((BIT_LENGTH - candidate) as f64);
+            if load_factor < max {
                 range = (candidate + 1, range.1)
             } else {
                 range = (range.0, candidate)
@@ -92,8 +105,8 @@ impl YFT {
             let mut pos = usize::from(*self.lss_top.get_unchecked(YFT::lss_top_position(&position, self.last_level_len)));
             if pos == 0 && self.elements.len() > 0 && *self.elements.get_unchecked(0) < position {
                 pos = self.elements.len() - 1;
-                if *self.elements.get_unchecked(pos) < position{
-                    return self.element_from_array(position, pos)
+                if *self.elements.get_unchecked(pos) < position {
+                    return self.element_from_array(position, pos);
                 }
             }
             debug_assert!(pos == 0 || self.elements[pos] >= position);
