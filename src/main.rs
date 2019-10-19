@@ -26,6 +26,7 @@ pub mod yft40_boomphf_hash_para;
 pub mod yft40_fx_hash_bottom_up_construction;
 pub mod yft40_fx_hash_capacity;
 pub mod yft40_fx_hash_no_level;
+pub mod yft40_fnv_hash;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
@@ -210,6 +211,7 @@ fn main() {
                     6 => testyft40!(yft40_fx_hash_bottom_up_construction::YFT; values),
                     7 => testyft40!(yft40_fx_hash_capacity::YFT; values),
                     8 => testyft40!(yft40_fx_hash_no_level::YFT; values),
+                    9 => testyft40!(yft40_fnv_hash::YFT; values),
                     _ => panic!("Invalid input for argument hash_map")
                 }
             } else {

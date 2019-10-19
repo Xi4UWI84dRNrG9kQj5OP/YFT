@@ -33,6 +33,7 @@ pub struct Args {
     /// 6 = Fx bottom up construction
     /// 7 = Fx capacity construction
     /// 8 = Fx no level
+    /// 9 = FNV
     #[structopt(short, long, default_value = "1")]
     pub hash_map: usize,
     /// Log memory usage

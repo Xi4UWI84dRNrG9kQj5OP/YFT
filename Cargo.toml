@@ -16,3 +16,4 @@ rustc-hash = "1.0.1"
 hashbrown = "0.6.0"
 im-rc = "13.0.0"
 boomphf = {git = "https://github.com/10XGenomics/rust-boomphf"}
+fnv = "1.0.3"

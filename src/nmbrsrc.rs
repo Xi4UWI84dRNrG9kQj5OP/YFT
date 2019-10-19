@@ -105,7 +105,6 @@ pub fn load_u40_serialized(path: &str) -> std::io::Result<Vec<u40>> {
     let input = File::open(path)?;
     let mut deserializer = Deserializer::new(input);
     let values: Vec<u40> = Deserialize::deserialize(&mut deserializer).unwrap();
-    dbg!(values.len());
     Ok(values)
 }
 

@@ -17,6 +17,7 @@ pub mod yft40_fx_hash;
 pub mod yft40_hash_brown;
 pub mod yft40_im_hash;
 pub mod yft40_boomphf_hash;
+pub mod yft40_fnv_hash;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
