@@ -117,7 +117,7 @@ fn main() {
         log.log_mem("values loaded").log_time("values loaded");
 
         {
-            if args.bin_search {
+            if args.hash_map == 100 {
                 let values = get_usize_values(&args, values);
 
                 log.log_mem("initialized").log_time("initialized");
@@ -138,7 +138,7 @@ fn main() {
                     }
                     log.log_time("queries processed");
                 }
-            } else if args.btree {
+            } else if args.hash_map == 101 {
                 let values = get_usize_values(&args, values);
                 let set = &(&values).into_iter().fold(BTreeSet::new(), |mut set, value| {
                     set.insert(value.clone());

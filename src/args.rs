@@ -12,11 +12,6 @@ pub struct Args {
     #[structopt(short = "a", long, default_value = "10")]
     pub min_start_level: usize,
     /// Use binary search instead of Y-Fast-Trie
-    #[structopt(short, long)]
-    pub bin_search: bool,
-    /// Use btree instead of Y-Fast-Trie
-    #[structopt(short = "c", long)]
-    pub btree: bool,
     /// Evaluate the predecessor search steps
     #[structopt(short = "d", long)]
     pub search_stats: bool,
@@ -34,6 +29,9 @@ pub struct Args {
     /// 7 = Fx capacity construction
     /// 8 = Fx no level
     /// 9 = FNV
+    /// 10 = Fx one level that is dynamically an array or a Hashmap
+    /// 100 = Use binary search instead of Y-Fast-Trie
+    /// 101 = Use btree instead of Y-Fast-Trie
     #[structopt(short, long, default_value = "1")]
     pub hash_map: usize,
     /// Log memory usage
@@ -73,7 +71,7 @@ pub struct Args {
     #[structopt(short = "y", long, default_value = "90")]
     pub max_last_level_load_factor: usize,
     /// Maximum number of lss levels
-    #[structopt(short = "z", long, default_value = "8")]
+    #[structopt(short = "z", long, default_value = "8")] //TODO prüfen
     pub  max_lss_level: usize,
 }
 
