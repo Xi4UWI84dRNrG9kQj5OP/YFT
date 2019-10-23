@@ -133,7 +133,7 @@ pub fn load_u40_fit(path: &str) -> std::io::Result<Vec<u40>> {
     Ok(values)
 }
 
-pub fn load_u64_tim(path: &str) -> std::io::Result<Vec<usize>> {
+pub fn load_u40_tim(path: &str) -> std::io::Result<Vec<u40>> {
     let mut input = File::open(path)?;
     let mut lenv = Vec::new();
     std::io::Read::by_ref(&mut input).take(std::mem::size_of::<usize>() as u64).read_to_end(&mut lenv)?;
@@ -145,16 +145,16 @@ pub fn load_u64_tim(path: &str) -> std::io::Result<Vec<usize>> {
 
     assert!(len == (std::fs::metadata(path)?.len() as usize - std::mem::size_of::<usize>()) / std::mem::size_of::<usize>());
 
-    let mut values: Vec<usize> = Vec::with_capacity(len);
+    let mut values: Vec<u40> = Vec::with_capacity(len);
     while values.len() != len {
-        let mut buffer = Vec::with_capacity(std::mem::size_of::<usize>());
-        std::io::Read::by_ref(&mut input).take(std::mem::size_of::<usize>() as u64).read_to_end(&mut buffer)?;
+        let mut buffer = Vec::with_capacity(std::mem::size_of::<u40>());
+        std::io::Read::by_ref(&mut input).take(std::mem::size_of::<u40>() as u64).read_to_end(&mut buffer)?;
         let mut next_value: u64 = 0;
         for i in 0..buffer.len() {
             next_value |= (buffer[i] as u64) << (8 * i);
         }
 
-        values.push(next_value as usize);
+        values.push(u40::from(next_value));
     }
     Ok(values)
 }
