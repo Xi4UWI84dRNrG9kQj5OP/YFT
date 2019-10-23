@@ -143,7 +143,7 @@ pub fn load_u64_tim(path: &str) -> std::io::Result<Vec<usize>> {
     }
     let len: usize = usize::from_le_bytes(len);
 
-    assert!(len == (std::fs::metadata(name)?.len() as usize - std::mem::size_of::<usize>()) / std::mem::size_of::<T>());
+    assert!(len == (std::fs::metadata(path)?.len() as usize - std::mem::size_of::<usize>()) / std::mem::size_of::<usize>());
 
     let mut values: Vec<usize> = Vec::with_capacity(len);
     while values.len() != len {
@@ -154,7 +154,7 @@ pub fn load_u64_tim(path: &str) -> std::io::Result<Vec<usize>> {
             next_value |= (buffer[i] as u64) << (8 * i);
         }
 
-        values.push(usize::from(next_value));
+        values.push(next_value as usize);
     }
     Ok(values)
 }
