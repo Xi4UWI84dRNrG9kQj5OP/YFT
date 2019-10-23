@@ -99,18 +99,15 @@ fn main() {
 
         if args.element_length_test && i > 0 {
             //decrease number of elements
-            match args.values {
-                ValueSrc::U40 { path: _ } | ValueSrc::U40S { path: _ } => {
-                    values = (values.0, values.1.iter().step_by(2usize.pow(i)).map(|v| v.clone()).collect());
-                    if values.1.len() < 2 {
-                        break;
-                    }
+            if values.0.len() == 0 {
+                values = (values.0, values.1.iter().step_by(2usize.pow(i)).map(|v| v.clone()).collect());
+                if values.1.len() < 2 {
+                    break;
                 }
-                _ => {
-                    values = (values.0.iter().step_by(2usize.pow(i)).map(|v| v.clone()).collect(), values.1);
-                    if values.0.len() < 2 {
-                        break;
-                    }
+            } else {
+                values = (values.0.iter().step_by(2usize.pow(i)).map(|v| v.clone()).collect(), values.1);
+                if values.0.len() < 2 {
+                    break;
                 }
             }
             //log is not used between begin of for loop and here -> no problems
@@ -121,7 +118,7 @@ fn main() {
 
         {
             if args.hash_map == 100 {
-                let values = get_usize_values(&args, values);
+                let values = get_usize_values(values);
 
                 log.log_mem("initialized").log_time("initialized");
 
@@ -142,7 +139,7 @@ fn main() {
                     log.log_time("queries processed");
                 }
             } else if args.hash_map == 101 {
-                let values = get_usize_values(&args, values);
+                let values = get_usize_values(values);
                 let set = &(&values).into_iter().fold(BTreeSet::new(), |mut set, value| {
                     set.insert(value.clone());
                     set
@@ -194,15 +191,11 @@ fn main() {
                     };
                 }
 
-                let values =
-                    match args.values {
-                        ValueSrc::U40 { path: _ } | ValueSrc::U40S { path: _ } => {
-                            values.1
-                        }
-                        _ => {
-                            values.0.into_iter().map(|v| u40::from(v)).collect()
-                        }
-                    };
+                let values = if values.0.len() == 0 {
+                    values.1
+                } else {
+                    values.0.into_iter().map(|v| u40::from(v)).collect()
+                };
 
                 match args.hash_map {
                     0 => testyft40!(yft40_rust_hash::YFT; values),
@@ -218,7 +211,7 @@ fn main() {
                     _ => panic!("Invalid input for argument hash_map")
                 }
             } else {
-                let yft = YFT::new(get_usize_values(&args, values), &args, &mut log);
+                let yft = YFT::new(get_usize_values(values), &args, &mut log);
 
                 log.log_mem("initialized").log_time("initialized");
 
@@ -265,15 +258,12 @@ fn main() {
     log.log_mem("end");
 }
 
-fn get_usize_values(args: &Args, values: (Vec<usize>, Vec<u40>)) -> Vec<usize> {
+fn get_usize_values(values: (Vec<usize>, Vec<u40>)) -> Vec<usize> {
     let values =
-        match args.values {
-            ValueSrc::U40 { path: _ } | ValueSrc::U40S { path: _ } => {
-                values.1.into_iter().map(|v| u64::from(v) as usize).collect()
-            }
-            _ => {
-                values.0
-            }
+        if values.0.len() == 0 {
+            values.1.into_iter().map(|v| u64::from(v) as usize).collect()
+        } else {
+            values.0
         };
     values
 }

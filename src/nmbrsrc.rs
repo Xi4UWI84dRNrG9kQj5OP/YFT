@@ -143,7 +143,7 @@ pub fn load_u40_tim(path: &str) -> std::io::Result<Vec<u40>> {
     }
     let len: usize = usize::from_le_bytes(len);
 
-    assert!(len == (std::fs::metadata(path)?.len() as usize - std::mem::size_of::<usize>()) / std::mem::size_of::<usize>());
+    assert!(len == (std::fs::metadata(path)?.len() as usize - std::mem::size_of::<usize>()) / std::mem::size_of::<u40>());
 
     let mut values: Vec<u40> = Vec::with_capacity(len);
     while values.len() != len {
