@@ -74,6 +74,9 @@ fn main() {
                 ValueSrc::Load { path } => {
                     (nmbrsrc::load(path.to_str().unwrap()).unwrap(), Vec::new())
                 }
+                ValueSrc::U64 { path } => {
+                    (nmbrsrc::load_u64_fit(path.to_str().unwrap()).unwrap(), Vec::new())
+                }
                 ValueSrc::U64S { path } => {
                     (nmbrsrc::load_u64_serialized(path.to_str().unwrap()).unwrap(), Vec::new())
                 }

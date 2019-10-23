@@ -132,3 +132,27 @@ pub fn load_u40_fit(path: &str) -> std::io::Result<Vec<u40>> {
     debug_assert!(i == number_of_values);
     Ok(values)
 }
+
+pub fn load_u64_fit(path: &str) -> std::io::Result<Vec<usize>> {
+    let mut input = File::open(path)?;
+    let number_of_values = std::fs::metadata(path)?.len() as usize / 5;
+    let mut values: Vec<usize> = vec![0; number_of_values];
+    let mut i = 0;
+    loop {
+        let mut buffer = Vec::new();
+        // read at most 5 bytes
+        input.by_ref().take(5).read_to_end(&mut buffer)?;
+        if buffer.len() < 5 {
+            if buffer.len() > 0 {
+                println!("Last Buffer: {:?}", buffer);
+            }
+            break;
+        }
+        values[i] = (buffer[0] as u64 | ((buffer[1] as u64) << 8) | ((buffer[2] as u64) << 16) | ((buffer[3] as u64) << 24) | ((buffer[4] as u64) << 32)) as usize;
+        debug_assert!(values.len() < 2 || values[values.len() - 2] < values[values.len() - 1]);
+        i += 1;
+    }
+    dbg!(values.len());
+    debug_assert!(i == number_of_values);
+    Ok(values)
+}

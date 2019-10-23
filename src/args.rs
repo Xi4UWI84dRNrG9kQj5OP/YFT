@@ -111,6 +111,11 @@ pub enum ValueSrc {
         #[structopt(parse(from_os_str))]
         path: PathBuf,
     },
+    /// A file with ordered u64 Numbers and no separators to create the Y-Fast-Trie
+    U64 {
+        #[structopt(parse(from_os_str))]
+        path: PathBuf,
+    },
     /// A file with ordered u64 Numbers to create the Y-Fast-Trie
     U64S {
         #[structopt(parse(from_os_str))]
