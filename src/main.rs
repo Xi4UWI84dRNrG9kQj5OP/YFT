@@ -55,7 +55,7 @@ fn main() {
     };
 
 
-    for i in 0..40 { //for element length test, else ignored //TODO change log
+    for i in 0..40 { //for element length test, else ignored
         //create yft input (u64, u40)
         let mut values: (Vec<usize>, Vec<u40>) =
             match &args.values {
@@ -128,6 +128,7 @@ fn main() {
                 //load queries & aply them, if option is set
                 if let Some(ref file) = args.queries {
                     let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
+                    let number = test_values.len();
                     if let Some(ref output) = args.output {
                         let predecessors = &test_values.into_iter().map(|v| bin_search_pred(&values, v).unwrap_or(0)).collect();
                         if let Err(e) = nmbrsrc::save(predecessors, output.to_str().unwrap()) {
@@ -136,7 +137,7 @@ fn main() {
                     } else {
                         let _: Vec<usize> = test_values.into_iter().map(|v| bin_search_pred(&values, v).unwrap_or(0)).collect();
                     }
-                    log.log_time("queries processed");
+                    log.log_time(&format!("queries processed\tnumber={}", number));
                 }
             } else if args.hash_map == 101 {
                 let values = get_usize_values(values);
@@ -152,6 +153,7 @@ fn main() {
                 //load queries & aply them, if option is set
                 if let Some(ref file) = args.queries {
                     let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
+                    let number = test_values.len();
                     if let Some(ref output) = args.output {
                         let predecessors = &test_values.into_iter().map(|v| btree_search_pred(set, v).unwrap_or(0)).collect();
                         if let Err(e) = nmbrsrc::save(predecessors, output.to_str().unwrap()) {
@@ -160,7 +162,7 @@ fn main() {
                     } else {
                         let _: Vec<usize> = test_values.into_iter().map(|v| btree_search_pred(set, v).unwrap_or(0)).collect();
                     }
-                    log.log_time("queries processed");
+                    log.log_time(&format!("queries processed\tnumber={}", number));
                 }
             } else if args.u40 {
                 //macro to load & test yft
@@ -174,6 +176,7 @@ fn main() {
                             //load queries & aply them, if option is set
                             if let Some(ref file) = args.queries {
                                 let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
+                                let number = test_values.len();
                                 if let Some(ref output) = args.output {
                                     let predecessors = &test_values.into_iter().map(|v| usize::from(yft.predecessor(u40::from(v)).unwrap_or(u40::from(0)))).collect();
                                     if let Err(e) = nmbrsrc::save(predecessors, output.to_str().unwrap()) {
@@ -182,7 +185,7 @@ fn main() {
                                 } else {
                                     let _: Vec<usize> = test_values.into_iter().map(|v| usize::from(yft.predecessor(u40::from(v)).unwrap_or(u40::from(0)))).collect();
                                 }
-                                log.log_time("queries processed");
+                                log.log_time(&format!("queries processed\tnumber={}", number));
                             }
                             if args.memory {
                                 yft.print_stats(&log);
@@ -211,6 +214,9 @@ fn main() {
                     _ => panic!("Invalid input for argument hash_map")
                 }
             } else {
+                if args.hash_map != 1 {
+                    eprintln!("Hashmap Parameter is ignored in usize mod\n Use -u Parameter!");
+                }
                 let yft = YFT::new(get_usize_values(values), &args, &mut log);
 
                 log.log_mem("initialized").log_time("initialized");
@@ -218,6 +224,7 @@ fn main() {
                 //load queries & aply them, if option is set
                 if let Some(ref file) = args.queries {
                     let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
+                    let number = test_values.len();
                     if let Some(ref output) = args.output {
                         let predecessors = &test_values.into_iter().map(|v| yft.predecessor(v).unwrap_or(0)).collect();
                         if let Err(e) = nmbrsrc::save(predecessors, output.to_str().unwrap()) {
@@ -242,7 +249,7 @@ fn main() {
                             let _: Vec<usize> = test_values.into_iter().map(|v| yft.predecessor(v).unwrap_or(0)).collect();
                         }
                     }
-                    log.log_time("queries processed");
+                    log.log_time(&format!("queries processed\tnumber={}", number));
                 }
                 if args.memory {
                     yft.print_stats(&log);
