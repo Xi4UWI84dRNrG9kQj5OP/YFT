@@ -15,7 +15,7 @@ the leafs descending from v will have key values
 between the quantities (i - 1)2^J + 1 and i* 2^J */
 
 pub struct YFT {
-    //position of successor of subtree in element vec, 0 if None
+    //position of successor of subtree in element vec, DataType::max_value() if None (it should never happen that DataType::max_value() must be used -> array contains all possible elements)
     lss_top: Vec<DataType>,
     // Position, node
     lss_leaf: FxHashMap<DataType, TreeLeaf>,
@@ -31,6 +31,12 @@ pub struct YFT {
 impl YFT {
     ///elements must be sorted ascending!
     pub fn new(elements: Vec<DataType>, args: &Args, log: &mut Log) -> YFT {
+        if elements.len() == 0 {
+            panic!("Input is empty");
+        }
+        if elements.len() >= usize::from(DataType::max_value()) - 1 {
+            panic!("Too many Elements in input");
+        }
         let start_level = YFT::calc_start_level(&elements, args.min_start_level, BIT_LENGTH - args.max_lss_level, args.min_start_level_load_factor);
         log.log_time("start level calculated");
         let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, start_level, BIT_LENGTH - args.max_lss_level, args.max_last_level_load_factor, args.min_load_factor_difference);
@@ -38,20 +44,18 @@ impl YFT {
         let levels = BIT_LENGTH - start_level - last_level_len;
 
         //initialise lss_top
-        let mut lss_top = vec![DataType::from(0); 2usize.pow(last_level_len as u32)];
+        let mut lss_top = vec![DataType::max_value(); 2usize.pow(last_level_len as u32)];//Bei eingaben bis 2^32 könnte man auch u32 nehmen...
         for (pos, value) in elements.iter().enumerate() {
             //check array is sorted
             debug_assert!(pos == 0 || value >= &elements[pos - 1]);
-            //check value not to big
-            debug_assert!(pos >> (levels + start_level + last_level_len) == 0);
             let mut lss_top_pos = YFT::lss_top_position(value, last_level_len) as usize;
 
             //set successors
-            if lss_top[lss_top_pos] == 0 && !is_left_child(DataType::from(YFT::lss_top_position(value, last_level_len + 1))) {
+            if lss_top[lss_top_pos] == DataType::max_value() && !is_left_child(DataType::from(YFT::lss_top_position(value, last_level_len + 1))) {
                 // for queries on left child of this top level element, this element is its successor
                 lss_top[lss_top_pos] = DataType::from(pos);
             }
-            while lss_top_pos > 0 && lss_top[lss_top_pos - 1] == 0 {
+            while lss_top_pos > 0 && lss_top[lss_top_pos - 1] == DataType::max_value() {
                 lss_top_pos -= 1;
                 lss_top[lss_top_pos] = DataType::from(pos);
             }
@@ -115,7 +119,7 @@ impl YFT {
         range.1 as usize
     }
 
-    ///start_level == lowest possible level
+    /// start_level == lowest possible level
     /// max_lss_level == highest possible level
     /// max_load_factor == maximal percentage that a level should be filled with (between 0 and 100)
     /// min_load_factor_difference == maximal factor that a level should be less relatively filled than the last possible level (between 0 and 100)
@@ -123,7 +127,7 @@ impl YFT {
         let mut range = (start_level + 1, max_lss_level);
         //load factor can only increase if level gets higher. If it doesn't, levels can be cut.
         let top_load_factor = YFT::calc_nodes_in_level(max_lss_level, elements) / 2f64.powf((BIT_LENGTH - max_lss_level) as f64) * (min_load_factor_difference as f64) / 100.;
-         let max = if top_load_factor < (max_load_factor as f64) / 100. {
+        let max = if top_load_factor < (max_load_factor as f64) / 100. {
             top_load_factor
         } else {
             (max_load_factor as f64) / 100.
@@ -141,7 +145,7 @@ impl YFT {
     }
 
     ///count how many nodes are in one level
-    fn calc_nodes_in_level(level: usize, elements: &Vec<DataType>) -> f64 { //TODO mögliche Beschleunigung durch Stichproben
+    fn calc_nodes_in_level(level: usize, elements: &Vec<DataType>) -> f64 {
         let mut last_val = calc_path(elements[0], level, 0);
         let mut count = 1.;
         for value in elements {
@@ -165,7 +169,7 @@ impl YFT {
     //position may not belong to existing node
     pub fn predecessor(&self, position: DataType) -> Option<DataType> {
         unsafe {
-            if position < *self.elements.get_unchecked(0) { //TODO array empty
+            if position < *self.elements.get_unchecked(0) {
                 return None;
             }
             //binary search lowest ancestor for some position
@@ -212,10 +216,10 @@ impl YFT {
 
             if search_range.0 == 0 {
                 //leaf level
-                match self.lss_leaf.get(&calc_path(position, search_range.0, self.start_level)) { //TODO konvertieren ggf. teuer
+                match self.lss_leaf.get(&calc_path(position, search_range.0, self.start_level)) {
                     Some(leaf) => {
                         //searched note is in Tree -> return its predecessor
-                        return self.elements.get(usize::from(leaf.first_element - 1 as u32)).cloned();
+                        return self.predecessor_from_array(position, leaf.first_element);
                     }
                     None => {
                         panic!("This can't happen, cause it was checked at beginning of this method, that there is a predecessor");
@@ -254,7 +258,8 @@ impl YFT {
         });
         unsafe {
             let pos = *self.lss_top.get_unchecked(YFT::lss_top_position(&position, self.last_level_len));
-            if pos == 0 {
+            if pos == DataType::max_value()  {
+                //case there is no bigger value
                 if self.elements.len() > 0 && *self.elements.get_unchecked(self.elements.len() - 1) < position {
                     return self.element_from_array(position, DataType::from(self.elements.len() - 1));
                 }

@@ -125,7 +125,7 @@ fn main() {
                 //print stats
                 log.print_result(format!("level=-1\telements={}", values.len()));
 
-                //load queries & aply them, if option is set
+                //load queries & apply them, if option is set
                 if let Some(ref file) = args.queries {
                     let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
                     let number = test_values.len();

@@ -128,7 +128,6 @@ pub fn load_u40_fit(path: &str) -> std::io::Result<Vec<u40>> {
         debug_assert!(values.len() < 2 || values[values.len() - 2] < values[values.len() - 1]);
         i += 1;
     }
-    dbg!(values.len());
     debug_assert!(i == number_of_values);
     Ok(values)
 }

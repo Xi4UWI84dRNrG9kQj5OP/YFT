@@ -14,7 +14,7 @@ the leafs descending from v will have key values
 between the quantities (i - 1)2^J + 1 and i* 2^J */
 
 pub struct YFT {
-    //position of successor of subtree in element vec, 0 if None
+    //position of predecessor of subtree in element vec, DataType::max_value() if None (it should never happen that DataType::max_value() must be used -> array contains all possible elements)
     lss_top: Vec<DataType>,
     //number of levels that are pooled into one level at the top of the xft
     last_level_len: usize,
@@ -25,18 +25,24 @@ pub struct YFT {
 impl YFT {
     ///elements must be sorted ascending!
     pub fn new(elements: Vec<DataType>, args: &Args, log: &mut Log) -> YFT {
+        if elements.len() == 0 {
+            panic!("Input is empty");
+        }
+        if elements.len() >= usize::from(DataType::max_value()) - 1 {
+            panic!("Too many Elements in input");
+        }
         let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, args.min_start_level, BIT_LENGTH - args.max_lss_level, args.max_last_level_load_factor, args.min_load_factor_difference);
         log.log_time("number of top levels calculated");
 
         //initialise lss_top
-        let mut lss_top = vec![DataType::from(0); 2usize.pow(last_level_len as u32)];
-        for (pos, value) in elements.iter().enumerate() {
+        let mut lss_top = vec![DataType::max_value(); 2usize.pow(last_level_len as u32)];
+        for (pos, value) in elements.iter().rev().enumerate() {
             //check array is sorted
             debug_assert!(pos == 0 || value >= &elements[pos - 1]);
             let mut lss_top_pos = YFT::lss_top_position(value, last_level_len) as usize;
 
-            //set successors //TODO auf predecessor umstellen, müsste einfacher sein; klappt aktuell beim letzten nicht, da dieser auch abschnitt beschreibt und asertion damit nicht umgehen kann
-            while lss_top_pos > 0 && lss_top[lss_top_pos - 1] == 0 { //Idee: vorgänger kopieren? TODO while unten beim suchen aus den anderen wieder raus, da strukturen drunter kann das nicht passieren
+            //set successors
+            while lss_top_pos > 0 && lss_top[lss_top_pos - 1] == DataType::max_value() {
                 lss_top_pos -= 1;
                 lss_top[lss_top_pos] = DataType::from(pos);
             }
@@ -78,7 +84,7 @@ impl YFT {
     }
 
     ///count how many nodes are in one level
-    fn calc_nodes_in_level(level: usize, elements: &Vec<DataType>) -> f64 { //TODO mögliche Beschleunigung durch Stichproben
+    fn calc_nodes_in_level(level: usize, elements: &Vec<DataType>) -> f64 {
         let mut last_val = calc_path(elements[0], level, 0);
         let mut count = 1.;
         for value in elements {
@@ -103,7 +109,7 @@ impl YFT {
     pub fn predecessor(&self, position: DataType) -> Option<DataType> {
         unsafe {
             let mut pos = usize::from(*self.lss_top.get_unchecked(YFT::lss_top_position(&position, self.last_level_len)));
-            if pos == 0 && self.elements.len() > 0 && *self.elements.get_unchecked(0) < position {
+            if pos == usize::from(DataType::max_value()) && self.elements.len() > 0 && *self.elements.get_unchecked(0) < position {
                 pos = self.elements.len() - 1;
                 if *self.elements.get_unchecked(pos) < position {
                     return self.element_from_array(position, pos);
