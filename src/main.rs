@@ -255,7 +255,7 @@ fn bin_search_pred(element_list: &Vec<u40>, element: u40) -> Option<u40> {
         Err(pos) => pos
     };
     if pos > 0 {
-        Some(element_list[pos])
+        Some(element_list[pos - 1])
     } else {
         None
     }
