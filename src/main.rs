@@ -117,53 +117,26 @@ fn main() {
         log.log_mem("values loaded").log_time("values loaded");
 
         {
-            if args.hash_map == 100 {
-                let values = get_usize_values(values);
-
-                log.log_mem("initialized").log_time("initialized");
+            if args.hash_map == 100 { //TODO rückgaben im Latex erklären
+                let values = get_u40_values(values);
 
                 //print stats
                 log.print_result(format!("level=-1\telements={}", values.len()));
+                log.log_mem("initialized").log_time("initialized");
 
-                //load queries & apply them, if option is set
-                if let Some(ref file) = args.queries {
-                    let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
-                    let number = test_values.len();
-                    if let Some(ref output) = args.output {
-                        let predecessors = &test_values.into_iter().map(|v| bin_search_pred(&values, v).unwrap_or(0)).collect();
-                        if let Err(e) = nmbrsrc::save(predecessors, output.to_str().unwrap()) {
-                            dbg!(e);
-                        }
-                    } else {
-                        let _: Vec<usize> = test_values.into_iter().map(|v| bin_search_pred(&values, v).unwrap_or(0)).collect();
-                    }
-                    log.log_time(&format!("queries processed\tnumber={}", number));
-                }
+                query(&|q| bin_search_pred(&values, q), &args, &mut log);
             } else if args.hash_map == 101 {
+                // performance is so bad, that possible improvement with u40 won't help
                 let values = get_usize_values(values);
                 let set = &(&values).into_iter().fold(BTreeSet::new(), |mut set, value| {
                     set.insert(value.clone());
                     set
                 });
-                log.log_mem("initialized").log_time("initialized");
-
                 //print stats
                 log.print_result(format!("level=-1\telements={}", values.len()));
+                log.log_mem("initialized").log_time("initialized");
 
-                //load queries & aply them, if option is set
-                if let Some(ref file) = args.queries {
-                    let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
-                    let number = test_values.len();
-                    if let Some(ref output) = args.output {
-                        let predecessors = &test_values.into_iter().map(|v| btree_search_pred(set, v).unwrap_or(0)).collect();
-                        if let Err(e) = nmbrsrc::save(predecessors, output.to_str().unwrap()) {
-                            dbg!(e);
-                        }
-                    } else {
-                        let _: Vec<usize> = test_values.into_iter().map(|v| btree_search_pred(set, v).unwrap_or(0)).collect();
-                    }
-                    log.log_time(&format!("queries processed\tnumber={}", number));
-                }
+                query(&|q| btree_search_pred(set, q), &args, &mut log);
             } else if args.u40 {
                 //macro to load & test yft
                 macro_rules! testyft40 {
@@ -173,20 +146,7 @@ fn main() {
 
                             log.log_mem("initialized").log_time("initialized");
 
-                            //load queries & aply them, if option is set
-                            if let Some(ref file) = args.queries {
-                                let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
-                                let number = test_values.len();
-                                if let Some(ref output) = args.output {
-                                    let predecessors = &test_values.into_iter().map(|v| usize::from(yft.predecessor(u40::from(v)).unwrap_or(u40::from(0)))).collect();
-                                    if let Err(e) = nmbrsrc::save(predecessors, output.to_str().unwrap()) {
-                                        dbg!(e);
-                                    }
-                                } else {
-                                    let _: Vec<usize> = test_values.into_iter().map(|v| usize::from(yft.predecessor(u40::from(v)).unwrap_or(u40::from(0)))).collect();
-                                }
-                                log.log_time(&format!("queries processed\tnumber={}", number));
-                            }
+                            query(&|q| yft.predecessor(u40::from(q)), &args, &mut log);
                             if args.memory {
                                 yft.print_stats(&log);
                             }
@@ -194,11 +154,7 @@ fn main() {
                     };
                 }
 
-                let values = if values.0.len() == 0 {
-                    values.1
-                } else {
-                    values.0.into_iter().map(|v| u40::from(v)).collect()
-                };
+                let values = get_u40_values(values);
 
                 match args.hash_map {
                     0 => testyft40!(yft40_rust_hash::YFT; values),
@@ -221,35 +177,28 @@ fn main() {
 
                 log.log_mem("initialized").log_time("initialized");
 
-                //load queries & aply them, if option is set
+                //load queries & apply them, if option is set
                 if let Some(ref file) = args.queries {
-                    let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
-                    let number = test_values.len();
-                    if let Some(ref output) = args.output {
-                        let predecessors = &test_values.into_iter().map(|v| yft.predecessor(v).unwrap_or(0)).collect();
-                        if let Err(e) = nmbrsrc::save(predecessors, output.to_str().unwrap()) {
-                            dbg!(e);
-                        }
-                    } else {
-                        if args.search_stats {
-                            let mut stats = vec![vec![0; 44]; 44];
-                            let _: Vec<usize> = test_values.into_iter().map(|v| {
-                                let (r, e, c) = yft.predecessor_with_stats(v);
-                                stats[e as usize][c as usize] += 1;
-                                r.unwrap_or(0)
-                            }).collect();
-                            for e in 0..43 {
-                                for c in 0..43 {
-                                    if stats[e][c] > 0 {
-                                        log.print_result(format!("Exit={}\tSearchSteps={}\tfrequency={}", e, c, stats[e][c]));
-                                    }
+                    if args.search_stats {
+                        let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
+                        let number = test_values.len();
+                        let mut stats = vec![vec![0; 44]; 44];
+                        let _: Vec<usize> = test_values.into_iter().map(|v| {
+                            let (r, e, c) = yft.predecessor_with_stats(v);
+                            stats[e as usize][c as usize] += 1;
+                            r.unwrap_or(0)
+                        }).collect();
+                        for e in 0..43 {
+                            for c in 0..43 {
+                                if stats[e][c] > 0 {
+                                    log.print_result(format!("Exit={}\tSearchSteps={}\tfrequency={}", e, c, stats[e][c]));
                                 }
                             }
-                        } else {
-                            let _: Vec<usize> = test_values.into_iter().map(|v| yft.predecessor(v).unwrap_or(0)).collect();
                         }
+                        log.log_time(&format!("queries processed\tnumber={}", number));
+                    } else {
+                        query(&|q| yft.predecessor(q), &args, &mut log);
                     }
-                    log.log_time(&format!("queries processed\tnumber={}", number));
                 }
                 if args.memory {
                     yft.print_stats(&log);
@@ -265,32 +214,48 @@ fn main() {
     log.log_mem("end");
 }
 
-fn get_usize_values(values: (Vec<usize>, Vec<u40>)) -> Vec<usize> {
-    let values =
-        if values.0.len() == 0 {
-            values.1.into_iter().map(|v| u64::from(v) as usize).collect()
+//load queries & apply them, if option is set
+fn query<T: From<usize> + std::fmt::Debug>(f: &dyn Fn(T) -> Option<T>, args: &Args, log: &mut log::Log) {
+    if let Some(ref file) = args.queries {
+        let queries = nmbrsrc::load(file.to_str().unwrap()).unwrap();
+        let number = queries.len();
+        if args.result {
+            for query in queries {
+                println!("{:?}", f(T::from(query)));
+            }
         } else {
-            values.0
-        };
-    values
+            for query in queries {
+                f(T::from(query));
+            }
+        }
+        log.log_time(&format!("queries processed\tnumber={}", number));
+    }
+}
+
+fn get_u40_values(values: (Vec<usize>, Vec<u40>)) -> Vec<u40> {
+    if values.0.len() == 0 {
+        values.1
+    } else {
+        values.0.into_iter().map(|v| u40::from(v)).collect()
+    }
+}
+
+fn get_usize_values(values: (Vec<usize>, Vec<u40>)) -> Vec<usize> {
+    if values.0.len() == 0 {
+        values.1.into_iter().map(|v| u64::from(v) as usize).collect()
+    } else {
+        values.0
+    }
 }
 
 ///binary search predecessor
-fn bin_search_pred(element_list: &Vec<usize>, element: usize) -> Option<usize> {
-    let mut l = 0;
-    let mut r = element_list.len() - 1;
-
-    while l != r {
-        let m = (l + r) / 2;
-        if element_list[m] < element {
-            r = m
-        } else {
-            l = m + 1;
-        }
-    }
-
-    if element >= element_list[l] {
-        Some(element_list[l])
+fn bin_search_pred(element_list: &Vec<u40>, element: u40) -> Option<u40> {
+    let pos = match element_list.binary_search(&element) {
+        Ok(pos) => pos,
+        Err(pos) => pos
+    };
+    if pos > 0 {
+        Some(element_list[pos])
     } else {
         None
     }

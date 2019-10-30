@@ -40,16 +40,15 @@ pub struct Args {
     /// Name of this run. Used for logging. If not set, a random number is used.
     #[structopt(short = "n", long)]
     pub  run_name: Option<String>,
-    /// File where results should be saved to
-    /// If there is no predecessor, 0 will be printed
-    #[structopt(short, long, parse(from_os_str))]
-    pub  output: Option<PathBuf>,
-    /// Print yft to outline
+    /// Print yft to outline //TODO wo wird das noch verwendet
     #[structopt(short, long)]
     pub  print: bool,
     /// File with predecessor queries
     #[structopt(short, long, parse(from_os_str))]
     pub  queries: Option<PathBuf>,
+    /// Print query results
+    #[structopt(short, long)]
+    pub  result: bool,
     /// A file where randomly generated Values from this run should be saved to
     #[structopt(short, long, parse(from_os_str))]
     pub  store: Option<PathBuf>,
