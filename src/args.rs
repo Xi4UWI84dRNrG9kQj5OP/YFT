@@ -29,6 +29,7 @@ pub struct Args {
     /// 7 = Fx capacity construction
     /// 8 = Fx no level
     /// 9 = FNV
+    /// 10 = Fx less Optimized
     /// 10 = Fx one level that is dynamically an array or a Hashmap
     /// 100 = Use binary search instead of Y-Fast-Trie
     /// 101 = Use btree instead of Y-Fast-Trie

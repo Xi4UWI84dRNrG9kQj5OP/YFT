@@ -19,6 +19,7 @@ use args::ValueSrc;
 pub mod yft64;
 pub mod yft40_rust_hash;
 pub mod yft40_fx_hash;
+pub mod yft40_fx_hash_alt;
 pub mod yft40_hash_brown;
 pub mod yft40_im_hash;
 pub mod yft40_boomphf_hash;
@@ -117,7 +118,7 @@ fn main() {
         log.log_mem("values loaded").log_time("values loaded");
 
         {
-            if args.hash_map == 100 { //TODO rückgaben im Latex erklären
+            if args.hash_map == 100 { //TODO rust rückgaben im Latex erklären
                 let values = get_u40_values(values);
 
                 //print stats
@@ -167,6 +168,7 @@ fn main() {
                     7 => testyft40!(yft40_fx_hash_capacity::YFT; values),
                     8 => testyft40!(yft40_fx_hash_no_level::YFT; values),
                     9 => testyft40!(yft40_fnv_hash::YFT; values),
+                    10 => testyft40!(yft40_fx_hash_alt::YFT; values),
                     _ => panic!("Invalid input for argument hash_map")
                 }
             } else {
