@@ -15,10 +15,11 @@ the leafs descending from v will have key values
 between the quantities (i - 1)2^J + 1 and i* 2^J */
 
 pub struct YFT {
-    //position of successor of subtree in element vec, DataType::max_value() if None (it should never happen that DataType::max_value() must be used -> array contains all possible elements)
+    //predecessor of non existing subtree vec, DataType::max_value() if None (DataType::max_value() cant't be predecessor)
     lss_top: Vec<DataType>,
-    // Position, node
+    // LSS Leaf Level (Position, Array Index)
     lss_leaf: FxHashMap<DataType, DataType>,
+    // List of LSS Branch Level (Position, predecessor)
     lss_branch: Vec<FxHashMap<DataType, DataType>>,
     //== lss leaf level
     start_level: usize,
@@ -48,17 +49,23 @@ impl YFT {
         for (pos, value) in elements.iter().enumerate() {
             //check array is sorted
             debug_assert!(pos == 0 || value >= &elements[pos - 1]);
-            let mut lss_top_pos = YFT::lss_top_position(value, last_level_len) as usize;
 
-            //set successors
-            if lss_top[lss_top_pos] == DataType::max_value() && !is_left_child(DataType::from(YFT::lss_top_position(value, last_level_len + 1))) {
-                // for queries on left child of this top level element, this element is its successor
-                lss_top[lss_top_pos] = DataType::from(pos);
+            //set predecessor
+            if is_left_child(DataType::from(YFT::lss_top_position(value, last_level_len + 1))) {
+                // for queries on right child of this top level element, this element is its predecessor
+                lss_top[YFT::lss_top_position(value, last_level_len) as usize] = elements[pos];
             }
-            while lss_top_pos > 0 && lss_top[lss_top_pos - 1] == DataType::max_value() {
-                lss_top_pos -= 1;
-                lss_top[lss_top_pos] = DataType::from(pos);
+        }
+        //fill skipped lss top positions
+        let mut lss_top_pos = 0;
+        let mut last_value = DataType::max_value();
+        while lss_top_pos < lss_top.len() {
+            if lss_top[lss_top_pos] == DataType::max_value() {
+                lss_top[lss_top_pos] = last_value;
+            } else {
+                last_value = lss_top[lss_top_pos];
             }
+            lss_top_pos += 1;
         }
         log.log_mem("lss_branch top filled").log_time("lss_branch top filled");
 
@@ -86,14 +93,15 @@ impl YFT {
             for i in 1..levels {
                 //path of new parent
                 let path = calc_path(*value, i, start_level);
-                if lss_branch[i - 1].contains_key(&path) {
-                    if is_left_child(child) {
-                        // set descending pointer to rightmost leaf
-                        lss_branch[i - 1].insert(path, DataType::from(element_array_index));
-                    }
+                if is_left_child(child) {
+                    // set descending pointer to rightmost leaf in left tree
+                    lss_branch[i - 1].insert(path, elements[element_array_index]);
                 } else {
-                    //case no parent -> create one
-                    lss_branch[i - 1].insert(path, DataType::from(element_array_index));
+                    // if only right tree exists, the predecessor of the first element has to be set (so don't set, if already one element is set)
+                    if !lss_branch[i - 1].contains_key(&path) {
+                        //max_value indicates no predecessor
+                        lss_branch[i - 1].insert(path, if element_array_index == 0 { DataType::max_value() } else { elements[element_array_index - 1] });
+                    }
                 }
                 child = path;
             }
@@ -181,7 +189,7 @@ impl YFT {
     //position may not belong to existing node
     pub fn predecessor(&self, position: DataType) -> Option<DataType> {
         unsafe {
-            if position < *self.elements.get_unchecked(0) { //TODO array empty
+            if position < *self.elements.get_unchecked(0) {
                 return None;
             }
             //binary search lowest ancestor for some position
@@ -198,7 +206,7 @@ impl YFT {
                     //leaf level
                     match self.lss_leaf.get(&calc_path(position, search_position, self.start_level)) {
                         Some(first_element) => {
-                            return self.predecessor_from_array(position, *first_element); //TODO deref weg
+                            return self.predecessor_from_array(position, *first_element);
                         }
                         None => {
                             //there is no node -> search higher
@@ -239,13 +247,11 @@ impl YFT {
                 }
             } else {
                 match self.lss_branch[search_range.0 - 1].get(&calc_path(position, search_range.0, self.start_level)) {
-                    Some(descending) => {
-                        if !is_left_child(calc_path(position, search_range.0 - 1, self.start_level)) {
-                            //first missing node in xft would be right child -> descending shows predecessor
-                            return self.element_from_array(position, *descending); //TODO descending direkt auf Wert setzen
+                    Some(predecessor) => {
+                        if *predecessor == DataType::max_value() {
+                            panic!("This can't happen, cause it was checked at beginning of this method, that there is a predecessor");
                         } else {
-                            //first missing node in xft would be left child -> descending shows successor
-                            return if *descending == 0 { None } else { self.element_from_array(position, *descending - 1 as u32) };
+                            return Some(*predecessor);
                         }
                     }
                     None => {
@@ -268,17 +274,11 @@ impl YFT {
             Some(_) => false
         });
         unsafe {
-            let pos = *self.lss_top.get_unchecked(YFT::lss_top_position(&position, self.last_level_len));
-            if pos == DataType::max_value() { //TODO auch durch direkten Vorgänger ersetzen?
-                //case there is no bigger value
-                if self.elements.len() > 0 && *self.elements.get_unchecked(self.elements.len() - 1) < position {
-                    return self.element_from_array(position, DataType::from(self.elements.len() - 1));
-                }
-                //assert there is no smaller value in element array
-                debug_assert!(self.elements.len() == 0 || self.elements[0] > position);
-                return None;
+            let predecessor = *self.lss_top.get_unchecked(YFT::lss_top_position(&position, self.last_level_len));
+            if predecessor == DataType::max_value() {
+                panic!("This can't happen, cause it was checked at beginning predecessor method, that there is a predecessor");
             } else {
-                return self.element_from_array(position, pos - 1 as u32);
+                return Some(predecessor);
             }
         }
     }
