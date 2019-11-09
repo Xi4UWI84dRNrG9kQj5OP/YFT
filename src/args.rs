@@ -11,6 +11,9 @@ pub struct Args {
     /// Minimal height of lowest lss level
     #[structopt(short = "a", long, default_value = "10")]
     pub min_start_level: usize,
+    /// Compress the YFT. Not working with u40 Option now.
+    #[structopt(short, long)]
+    pub compress: bool,
     /// Use binary search instead of Y-Fast-Trie
     /// Evaluate the predecessor search steps
     #[structopt(short = "d", long)]

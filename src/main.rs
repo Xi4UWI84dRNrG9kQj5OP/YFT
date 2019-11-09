@@ -20,6 +20,7 @@ pub mod yft64;
 pub mod yft40_rust_hash;
 pub mod yft40_fx_hash;
 pub mod yft40_fx_hash_alt;
+pub mod yft40_fx_hash_new;
 pub mod yft40_hash_brown;
 pub mod yft40_im_hash;
 pub mod yft40_boomphf_hash;
@@ -169,6 +170,7 @@ fn main() {
                     8 => testyft40!(yft40_fx_hash_no_level::YFT; values),
                     9 => testyft40!(yft40_fnv_hash::YFT; values),
                     10 => testyft40!(yft40_fx_hash_alt::YFT; values),
+                    20 => testyft40!(yft40_fx_hash_new::YFT; values),
                     _ => panic!("Invalid input for argument hash_map")
                 }
             } else {
@@ -230,7 +232,7 @@ fn query<T: From<usize> + std::fmt::Debug>(f: &dyn Fn(T) -> Option<T>, args: &Ar
                 f(T::from(query));
             }
         }
-        log.log_time(&format!("queries processed\tnumber={}", number));
+        log.log_time(&format!("queries processed\tqueries={}", number));
     }
 }
 
