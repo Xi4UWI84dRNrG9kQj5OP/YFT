@@ -12,9 +12,9 @@ extern crate im_rc;
 pub use yft64::YFT;
 use structopt::StructOpt;
 use uint::u40;
-use std::collections::BTreeSet;
 use args::Args;
 use args::ValueSrc;
+use std::collections::BTreeSet;
 
 pub mod yft64;
 pub mod yft40_rust_hash;
@@ -29,10 +29,12 @@ pub mod yft40_fx_hash_bottom_up_construction;
 pub mod yft40_fx_hash_capacity;
 pub mod yft40_fx_hash_no_level;
 pub mod yft40_fnv_hash;
+//pub mod yft40_fx_hash_comp;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
 pub mod args;
+pub mod extern_pred_search;
 
 fn main() {
     let args = Args::from_args();
@@ -119,14 +121,14 @@ fn main() {
         log.log_mem("values loaded").log_time("values loaded");
 
         {
-            if args.hash_map == 100 { //TODO rust rückgaben im Latex erklären
+            if args.hash_map == 100 {
                 let values = get_u40_values(values);
 
                 //print stats
                 log.print_result(format!("level=-1\telements={}", values.len()));
                 log.log_mem("initialized").log_time("initialized");
 
-                query(&|q| bin_search_pred(&values, q), &args, &mut log);
+                query(&|q| extern_pred_search::bin_search_pred(&values, q), &args, &mut log);
             } else if args.hash_map == 101 {
                 // performance is so bad, that possible improvement with u40 won't help
                 let values = get_usize_values(values);
@@ -138,7 +140,7 @@ fn main() {
                 log.print_result(format!("level=-1\telements={}", values.len()));
                 log.log_mem("initialized").log_time("initialized");
 
-                query(&|q| btree_search_pred(set, q), &args, &mut log);
+                query(&|q| extern_pred_search::btree_search_pred(set, q), &args, &mut log);
             } else if args.u40 {
                 //macro to load & test yft
                 macro_rules! testyft40 {
@@ -250,22 +252,4 @@ fn get_usize_values(values: (Vec<usize>, Vec<u40>)) -> Vec<usize> {
     } else {
         values.0
     }
-}
-
-///binary search predecessor
-fn bin_search_pred(element_list: &Vec<u40>, element: u40) -> Option<u40> {
-    let pos = match element_list.binary_search(&element) {
-        Ok(pos) => pos,
-        Err(pos) => pos
-    };
-    if pos > 0 {
-        Some(element_list[pos - 1])
-    } else {
-        None
-    }
-}
-
-///search predecessor with BTree
-fn btree_search_pred(set: &BTreeSet<usize>, element: usize) -> Option<usize> {
-    Some(*set.range(0..element).last()?)
 }

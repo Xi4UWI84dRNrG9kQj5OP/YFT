@@ -200,7 +200,7 @@ impl YFT {
             // position 0 == lss_leaf, position len()+1 == lss_top
             let mut search_range = (0, self.lss_branch.len() + 1);
             while search_range.0 != search_range.1 {
-                let search_position = (search_range.0 + search_range.1) / 2;
+                let mut search_position = (search_range.0 + search_range.1) / 2;
                 if search_position == self.lss_branch.len() + 1 {
                     //top level may only be used iff there are no existing nodes below in search path
                     search_position -= 1;

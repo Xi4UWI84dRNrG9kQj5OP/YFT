@@ -35,7 +35,7 @@ impl YFT {
     ///elements must be sorted ascending!
     pub fn new(elements: Vec<DataType>, args: &Args, log: &mut Log) -> YFT {
         let group_size = 40;
-        if elements.len() < group_size {
+        if elements.len() < 10 {
             panic!("Input to small");
         }
         if elements.len() >= usize::from(DataType::max_value()) - 1 {
@@ -220,7 +220,7 @@ impl YFT {
             // value 0 == lss_leaf, value len()+1 == lss_top
             let mut search_range = (0, self.lss_branch.len() + 1);
             while search_range.0 != search_range.1 {
-                let search_position = (search_range.0 + search_range.1) / 2;
+                let mut search_position = (search_range.0 + search_range.1) / 2;
                 if search_position == self.lss_branch.len() + 1 {
                     //top level may only be used iff there are no existing nodes below in search path
                     search_position -= 1;

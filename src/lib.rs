@@ -7,66 +7,104 @@ extern crate bitflags;
 extern crate uint;
 extern crate stats_alloc;
 
-pub use yft64::YFT;
-//use std::path::PathBuf;
-//use structopt::StructOpt;
-
-pub mod yft64;
 pub mod yft40_rust_hash;
 pub mod yft40_fx_hash;
-pub mod yft40_hash_brown;
-pub mod yft40_im_hash;
-pub mod yft40_boomphf_hash;
 pub mod yft40_fnv_hash;
+pub mod yft40_fx_hash_no_level;
+pub mod yft40_fx_hash_alt;
+pub mod yft40_fx_hash_new;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
 pub mod args;
+pub mod extern_pred_search;
 
 #[cfg(test)]
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
+    use args::{Args, ValueSrc};
+    use uint::u40;
 
     #[test]
     fn test() { //TODO abdeckende test, statt dieser eher zufälligen
-        let mut values = vec![1, 2, 3, 100, 1000, 10000, 100000, 1000000, 10000000, 1099511627774];
-        let mut yft = YFT::new(values, 10, 30, 8, 90, &mut log::Log::new("".to_string()));
-        assert_eq!(yft.predecessor(0), None);
-        assert_eq!(yft.predecessor(1), None);
-        assert_eq!(yft.predecessor(2), Some(1));
-        assert_eq!(yft.predecessor(3), Some(2));
-        assert_eq!(yft.predecessor(11), Some(3));
-        assert_eq!(yft.predecessor(500), Some(100));
-        assert_eq!(yft.predecessor(1000), Some(100));
-        assert_eq!(yft.predecessor(109951162), Some(10000000));
-        assert_eq!(yft.predecessor(1099511627), Some(10000000));
-        assert_eq!(yft.predecessor(10995116277), Some(10000000));
-        assert_eq!(yft.predecessor(184467440737), Some(10000000));
-        assert_eq!(yft.predecessor(1099511627774), Some(10000000));
-        assert_eq!(yft.predecessor(1099511627775), Some(1099511627774));
-        values = vec![1099511627, 1099511627775];
-        yft = YFT::new(values, 10, 30, 8, 90, &mut log::Log::new("".to_string()));
-        assert_eq!(yft.predecessor(0), None);
-        assert_eq!(yft.predecessor(1), None);
-        assert_eq!(yft.predecessor(2), None);
-        assert_eq!(yft.predecessor(3), None);
-        assert_eq!(yft.predecessor(11), None);
-        assert_eq!(yft.predecessor(500), None);
-        assert_eq!(yft.predecessor(1000), None);
-        assert_eq!(yft.predecessor(1099511627774), Some(1099511627));
-        assert_eq!(yft.predecessor(1099511627775), Some(1099511627));
-        values = vec![1844, 18446744073];
-        yft = YFT::new(values, 10, 30, 8, 90, &mut log::Log::new("".to_string()));
-        assert_eq!(yft.predecessor(0), None);
-        assert_eq!(yft.predecessor(1), None);
-        assert_eq!(yft.predecessor(2), None);
-        assert_eq!(yft.predecessor(3), None);
-        assert_eq!(yft.predecessor(11), None);
-        assert_eq!(yft.predecessor(500), None);
-        assert_eq!(yft.predecessor(1000), None);
-        assert_eq!(yft.predecessor(109951162777), Some(18446744073));
-        assert_eq!(yft.predecessor(1099511627773), Some(18446744073));
-        assert_eq!(yft.predecessor(1099511627774), Some(18446744073));
+        let args = Args {
+            values: ValueSrc::Uniform { length: 0 },
+            min_start_level: 10,
+            compress: false,
+            search_stats: false,
+            element_length_test: false,
+            hash_map: 1,
+            memory: false,
+            run_name: None,
+            print: false,
+            queries: None,
+            result: false,
+            store: None,
+            time: false,
+            u40: false,
+            min_load_factor_difference: 99,
+            min_start_level_load_factor: 1,
+            max_last_level_load_factor: 99,
+            max_lss_level: 8,
+        };
+        let mut log = log::Log::new(String::from("Test"));
+
+
+        let mut values = vec![1, 2, 3, 100, 1000, 10000, 100000, 1000000, 10000000, 1099511627774].iter().map(|v: &u64| u40::from(*v)).collect();
+        let mut queries: Vec<u40> = vec![0, 1, 1099511627774, 1099511627775].iter().map(|v : &u64| u40::from(*v)).collect();
+
+        let mut results = Vec::new();
+        for query in &queries {
+            results.push(extern_pred_search::bin_search_pred(&values, *query));
+        }
+
+        {
+            let yft = yft40_fx_hash_new::YFT::new(values.clone(), &args, &mut log);
+
+            for (pos, query) in queries.iter().enumerate() {
+                assert_eq!(yft.predecessor(*query), results[pos]);
+            }
+        }
+
+        {
+            let yft = yft40_fx_hash::YFT::new(values.clone(), &args, &mut log);
+
+            for (pos, query) in queries.iter().enumerate() {
+                assert_eq!(yft.predecessor(*query), results[pos]);
+            }
+        }
+
+        {
+            let yft = yft40_fx_hash_alt::YFT::new(values.clone(), &args, &mut log);
+
+            for (pos, query) in queries.iter().enumerate() {
+                assert_eq!(yft.predecessor(*query), results[pos]);
+            }
+        }
+
+        {
+            let yft = yft40_fx_hash_no_level::YFT::new(values.clone(), &args, &mut log);
+
+            for (pos, query) in queries.iter().enumerate() {
+                assert_eq!(yft.predecessor(*query), results[pos]);
+            }
+        }
+
+        {
+            let yft = yft40_fnv_hash::YFT::new(values.clone(), &args, &mut log);
+
+            for (pos, query) in queries.iter().enumerate() {
+                assert_eq!(yft.predecessor(*query), results[pos]);
+            }
+        }
+
+        {
+            let yft = yft40_rust_hash::YFT::new(values.clone(), &args, &mut log);
+
+            for (pos, query) in queries.iter().enumerate() {
+                assert_eq!(yft.predecessor(*query), results[pos]);
+            }
+        }
     }
 }
