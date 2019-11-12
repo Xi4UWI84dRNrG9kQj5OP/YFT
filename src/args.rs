@@ -21,6 +21,12 @@ pub struct Args {
     /// Run multiple times, each time with half much elements than before
     #[structopt(short, long)]
     pub element_length_test: bool,
+    /// If set leaf level will not be calculated.
+    #[structopt(short = "fs", long)]
+    pub fixed_leaf_level: Option<usize>,
+    /// If set top level will not be calculated.
+    #[structopt(short = "ft", long)]
+    pub fixed_top_level: Option<usize>,
     /// Hashmap that should be use. Only usable with u40 Option. Not compatible with values Option.
     /// 0 = std
     /// 1 = Fx
@@ -33,7 +39,7 @@ pub struct Args {
     /// 8 = Fx no level
     /// 9 = FNV
     /// 10 = Fx less Optimized
-    /// 10 = Fx one level that is dynamically an array or a Hashmap
+    /// 20 = new impl
     /// 100 = Use binary search instead of Y-Fast-Trie
     /// 101 = Use btree instead of Y-Fast-Trie
     #[structopt(short, long, default_value = "1")]
@@ -44,9 +50,6 @@ pub struct Args {
     /// Name of this run. Used for logging. If not set, a random number is used.
     #[structopt(short = "n", long)]
     pub  run_name: Option<String>,
-    /// Print yft to outline //TODO wo wird das noch verwendet
-    #[structopt(short, long)]
-    pub  print: bool,
     /// File with predecessor queries
     #[structopt(short, long, parse(from_os_str))]
     pub  queries: Option<PathBuf>,

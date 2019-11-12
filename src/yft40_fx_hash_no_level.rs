@@ -31,7 +31,11 @@ impl YFT {
         if elements.len() >= usize::from(DataType::max_value()) - 1 {
             panic!("Too many Elements in input");
         }
-        let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, args.min_start_level, BIT_LENGTH - args.max_lss_level, args.max_last_level_load_factor, args.min_load_factor_difference);
+        let last_level_len = if let Some(top_level) = args.fixed_top_level{
+            BIT_LENGTH - top_level
+        }  else {
+            BIT_LENGTH - YFT::calc_lss_top_level(&elements, args.min_start_level, BIT_LENGTH - args.max_lss_level, args.max_last_level_load_factor, args.min_load_factor_difference)
+        };
         log.log_time("number of top levels calculated");
 
         //initialise lss_top

@@ -38,11 +38,20 @@ impl YFT {
         if elements.len() >= usize::from(DataType::max_value()) - 1 {
             panic!("Too many Elements in input");
         }
-        let start_level = YFT::calc_start_level(&elements, args.min_start_level, BIT_LENGTH - args.max_lss_level, args.min_start_level_load_factor);
+        let start_level = if let Some(start_level) = args.fixed_leaf_level{
+            start_level
+        }  else {
+            YFT::calc_start_level(&elements, args.min_start_level, BIT_LENGTH - args.max_lss_level, args.min_start_level_load_factor)
+        };
         log.log_time("start level calculated");
-        let last_level_len = BIT_LENGTH - YFT::calc_lss_top_level(&elements, start_level, BIT_LENGTH - args.max_lss_level, args.max_last_level_load_factor, args.min_load_factor_difference);
+        let last_level_len = if let Some(top_level) = args.fixed_top_level{
+            BIT_LENGTH - top_level
+        }  else {
+            BIT_LENGTH - YFT::calc_lss_top_level(&elements, start_level, BIT_LENGTH - args.max_lss_level, args.max_last_level_load_factor, args.min_load_factor_difference)
+        };
         log.log_time("number of top levels calculated");
         let levels = BIT_LENGTH - start_level - last_level_len;
+        assert!(levels > 0 && levels < BIT_LENGTH);
 
         //initialise lss_top
         let mut lss_top = vec![DataType::max_value(); 2usize.pow(last_level_len as u32)];//Bei eingaben bis 2^32 könnte man auch u32 nehmen...
