@@ -13,6 +13,7 @@ pub mod yft40_fnv_hash;
 pub mod yft40_fx_hash_no_level;
 pub mod yft40bn_fx_hash;
 pub mod yft40bo_fx_hash;
+pub mod yft40so_fx_hash;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
@@ -152,6 +153,18 @@ mod tests {
             let yft1 = yft40_rust_hash::YFT::new(values1.clone(), &args, &mut log);
             let yft2 = yft40_rust_hash::YFT::new(values2.clone(), &args, &mut log);
             let yftr = yft40_rust_hash::YFT::new(rnd_values.clone(), &args, &mut log);
+
+            for (pos, query) in queries.iter().enumerate() {
+                assert_eq!(yft1.predecessor(*query), results_1[pos]);
+                assert_eq!(yft2.predecessor(*query), results_2[pos]);
+                assert_eq!(yftr.predecessor(*query), results_r[pos]);
+            }
+        }
+
+        {
+            let yft1 = yft40so_fx_hash::YFT::new(values1.clone(), &args, &mut log);
+            let yft2 = yft40so_fx_hash::YFT::new(values2.clone(), &args, &mut log);
+            let yftr = yft40so_fx_hash::YFT::new(rnd_values.clone(), &args, &mut log);
 
             for (pos, query) in queries.iter().enumerate() {
                 assert_eq!(yft1.predecessor(*query), results_1[pos]);

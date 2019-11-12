@@ -40,6 +40,7 @@ pub struct Args {
     /// 9 = FNV
     /// 10 = Fx, No fixed leaf groups, child pointer
     /// 20 = Fx, leaf groups, child pointer
+    /// 21 = Fx, leaf groups, no child pointer
     /// 100 = Use binary search instead of Y-Fast-Trie
     /// 101 = Use btree instead of Y-Fast-Trie
     #[structopt(short, long, default_value = "1")]

@@ -21,6 +21,7 @@ pub mod yft40_rust_hash;
 pub mod yft40sn_fx_hash;
 pub mod yft40bn_fx_hash;
 pub mod yft40bo_fx_hash;
+pub mod yft40so_fx_hash;
 pub mod yft40_hash_brown;
 pub mod yft40_im_hash;
 pub mod yft40_boomphf_hash;
@@ -173,6 +174,7 @@ fn main() {
                     9 => testyft40!(yft40_fnv_hash::YFT; values),
                     10 => testyft40!(yft40bn_fx_hash::YFT; values),
                     20 => testyft40!(yft40bo_fx_hash::YFT; values),
+                    21 => testyft40!(yft40so_fx_hash::YFT; values),
                     _ => panic!("Invalid input for argument hash_map")
                 }
             } else {
