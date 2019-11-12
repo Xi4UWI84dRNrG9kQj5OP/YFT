@@ -14,9 +14,7 @@ const BIT_LENGTH: usize = 40;
 the leafs descending from v will have key values
 between the quantities (i - 1)2^J + 1 and i* 2^J */
 
-///Impl with fixed group size and with child pointer
 pub struct YFT {
-    //TODO immer Gruppen einer bestimmten Größe bilden elements.get(range).binary_search() als basis
     //predecessor of non existing subtree vec, DataType::max_value() if None (DataType::max_value() cant't be predecessor)
     lss_top: Vec<DataType>,
     // Position, node
@@ -35,7 +33,7 @@ pub struct YFT {
 impl YFT {
     ///elements must be sorted ascending!
     pub fn new(elements: Vec<DataType>, args: &Args, log: &mut Log) -> YFT {
-        let group_size = 40;
+        let group_size = args.leaf_group_size;
         if elements.len() < 10 {
             panic!("Input to small");
         }
@@ -324,7 +322,7 @@ impl YFT {
 
     fn predecessor_from_array(&self, query: DataType, index: DataType) -> Option<DataType> {
         //get bounds for binary search in elements array
-        let left = if index <= self.group_size as u64  { //TODO dieses if let liesse sich wegoptimieren
+        let left = if index <= self.group_size as u64  {
             0
         } else {
             // predecessor can be smaller first query in leaf
@@ -366,7 +364,6 @@ bitflags! {
 
 struct TreeBranch {
     children: Children,
-    //TODO komplett weg
     //0 None, 1 == left child, 2 == right child, 3 == both
     descending: DataType, //Position of predecelement in elementarray
 }
