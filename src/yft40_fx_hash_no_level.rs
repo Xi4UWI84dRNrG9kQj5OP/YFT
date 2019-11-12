@@ -13,6 +13,7 @@ const BIT_LENGTH: usize = 40;
 the leafs descending from v will have key values
 between the quantities (i - 1)2^J + 1 and i* 2^J */
 
+///Impl without xft (far away from yft)
 pub struct YFT {
     //position of predecessor of subtree in element vec, DataType::max_value() if None (it should never happen that DataType::max_value() must be used -> array contains all possible elements)
     lss_top: Vec<DataType>,
@@ -105,43 +106,43 @@ impl YFT {
         usize::from(*value) >> (BIT_LENGTH - lss_top_length)
     }
 
-    pub fn contains(&self, position: DataType) -> bool {
-        self.predecessor(position + 1 as u32) == Some(position)
+    pub fn contains(&self, query: DataType) -> bool {
+        self.predecessor(query + 1 as u32) == Some(query)
     }
 
-    //position may not belong to existing node
-    pub fn predecessor(&self, position: DataType) -> Option<DataType> {
+    //query may not belong to existing node
+    pub fn predecessor(&self, query: DataType) -> Option<DataType> {
         unsafe {
-            let mut pos = usize::from(*self.lss_top.get_unchecked(YFT::lss_top_position(&position, self.last_level_len)));
-            if pos == usize::from(DataType::max_value()) && self.elements.len() > 0 && *self.elements.get_unchecked(0) < position {
+            let mut pos = usize::from(*self.lss_top.get_unchecked(YFT::lss_top_position(&query, self.last_level_len)));
+            if pos == usize::from(DataType::max_value()) && self.elements.len() > 0 && *self.elements.get_unchecked(0) < query {
                 pos = self.elements.len() - 1;
-                if *self.elements.get_unchecked(pos) < position {
-                    return self.element_from_array(position, pos);
+                if *self.elements.get_unchecked(pos) < query {
+                    return self.element_from_array(query, pos);
                 }
             }
-            debug_assert!(pos == 0 || self.elements[pos] >= position);
-            while pos > 0 && *self.elements.get_unchecked(pos - 1) >= position {
+            debug_assert!(pos == 0 || self.elements[pos] >= query);
+            while pos > 0 && *self.elements.get_unchecked(pos - 1) >= query {
                 pos = pos - 1;
             }
-            debug_assert!(pos == 0 || self.elements[pos] >= position);
+            debug_assert!(pos == 0 || self.elements[pos] >= query);
             if pos == 0 {
                 //assert there is no smaller value in element array
-                debug_assert!(self.elements.len() == 0 || self.elements[0] >= position);
+                debug_assert!(self.elements.len() == 0 || self.elements[0] >= query);
                 None
             } else {
-                self.element_from_array(position, pos - 1)
+                self.element_from_array(query, pos - 1)
             }
         }
     }
 
 
-    /// position = predecessor query
+    /// query = predecessor query
     /// index = predecessor position in array
-    fn element_from_array(&self, position: DataType, index: usize) -> Option<DataType> {
+    fn element_from_array(&self, query: DataType, index: usize) -> Option<DataType> {
         //test next value greater than search one
-        debug_assert!(index + 1 >= self.elements.len() || if let Some(successor) = self.elements.get(index + 1) { successor >= &position } else { true });
+        debug_assert!(index + 1 >= self.elements.len() || if let Some(successor) = self.elements.get(index + 1) { successor >= &query } else { true });
         //test value smaller than searched one
-        debug_assert!(if let Some(predecessor) = self.elements.get(index) { predecessor < &position } else { true });
+        debug_assert!(if let Some(predecessor) = self.elements.get(index) { predecessor < &query } else { true });
         debug_assert!(index < self.elements.len());
         unsafe {
             return Some(*self.elements.get_unchecked(index));

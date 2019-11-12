@@ -18,9 +18,9 @@ use std::collections::BTreeSet;
 
 pub mod yft64;
 pub mod yft40_rust_hash;
-pub mod yft40_fx_hash;
-pub mod yft40_fx_hash_alt;
-pub mod yft40_fx_hash_new;
+pub mod yft40sn_fx_hash;
+pub mod yft40bn_fx_hash;
+pub mod yft40bo_fx_hash;
 pub mod yft40_hash_brown;
 pub mod yft40_im_hash;
 pub mod yft40_boomphf_hash;
@@ -162,7 +162,7 @@ fn main() {
 
                 match args.hash_map {
                     0 => testyft40!(yft40_rust_hash::YFT; values),
-                    1 => testyft40!(yft40_fx_hash::YFT; values),
+                    1 => testyft40!(yft40sn_fx_hash::YFT; values),
                     2 => testyft40!(yft40_hash_brown::YFT; values),
                     3 => testyft40!(yft40_im_hash::YFT; values),
                     4 => testyft40!(yft40_boomphf_hash::YFT; values),
@@ -171,8 +171,8 @@ fn main() {
                     7 => testyft40!(yft40_fx_hash_capacity::YFT; values),
                     8 => testyft40!(yft40_fx_hash_no_level::YFT; values),
                     9 => testyft40!(yft40_fnv_hash::YFT; values),
-                    10 => testyft40!(yft40_fx_hash_alt::YFT; values),
-                    20 => testyft40!(yft40_fx_hash_new::YFT; values),
+                    10 => testyft40!(yft40bn_fx_hash::YFT; values),
+                    20 => testyft40!(yft40bo_fx_hash::YFT; values),
                     _ => panic!("Invalid input for argument hash_map")
                 }
             } else {

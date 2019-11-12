@@ -22,14 +22,14 @@ pub struct Args {
     #[structopt(short, long)]
     pub element_length_test: bool,
     /// If set leaf level will not be calculated.
-    #[structopt(short = "fs", long)]
+    #[structopt(short = "f", long)]
     pub fixed_leaf_level: Option<usize>,
     /// If set top level will not be calculated.
-    #[structopt(short = "ft", long)]
+    #[structopt(short = "g", long)]
     pub fixed_top_level: Option<usize>,
-    /// Hashmap that should be use. Only usable with u40 Option. Not compatible with values Option.
+    /// Implementation that should be use. Only usable with u40 Option.
     /// 0 = std
-    /// 1 = Fx
+    /// 1 = Fx, No fixed leaf groups, no child pointer
     /// 2 = Hashbrown
     /// 3 = im-rc
     /// 4 = boomphf
@@ -38,8 +38,8 @@ pub struct Args {
     /// 7 = Fx capacity construction
     /// 8 = Fx no level
     /// 9 = FNV
-    /// 10 = Fx less Optimized
-    /// 20 = new impl
+    /// 10 = Fx, No fixed leaf groups, child pointer
+    /// 20 = Fx, leaf groups, child pointer
     /// 100 = Use binary search instead of Y-Fast-Trie
     /// 101 = Use btree instead of Y-Fast-Trie
     #[structopt(short, long, default_value = "1")]
@@ -76,8 +76,8 @@ pub struct Args {
     /// Must be between 1 and 100.
     #[structopt(short = "y", long, default_value = "90")]
     pub max_last_level_load_factor: usize,
-    /// Maximum number of lss levels
-    #[structopt(short = "z", long, default_value = "8")] //TODO prüfen
+    /// Highest possible lss levels
+    #[structopt(short = "z", long, default_value = "8")]
     pub  max_lss_level: usize,
 }
 
