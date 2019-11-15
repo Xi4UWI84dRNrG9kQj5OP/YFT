@@ -39,7 +39,6 @@ mod tests {
             fixed_leaf_level: Some(8),
             fixed_top_level: Some(32),
             hash_map: 1,
-            leaf_group_size: 40,
             memory: false,
             run_name: None,
             queries: None,

@@ -28,29 +28,27 @@ pub struct YFT {
     last_level_len: usize,
     //Original input
     elements: Vec<DataType>,
-    //size that each bucket of elements under one leaf has
-    group_size: usize,
 }
 
 impl YFT {
     ///elements must be sorted ascending!
     pub fn new(elements: Vec<DataType>, args: &Args, log: &mut Log) -> YFT {
-        let group_size = args.leaf_group_size;
         if elements.len() < 10 {
             panic!("Input to small");
         }
         if elements.len() >= usize::from(DataType::max_value()) - 1 {
             panic!("Too many Elements in input");
         }
-        let start_level = if let Some(start_level) = args.fixed_leaf_level{
+        let start_level = if let Some(start_level) = args.fixed_leaf_level {
             start_level
-        }  else {
+        } else {
             YFT::calc_start_level(&elements, args.min_start_level, BIT_LENGTH - args.max_lss_level, args.min_start_level_load_factor)
         };
+        let group_size = 2usize.pow(start_level as u32);
         log.log_time("start level calculated");
-        let last_level_len = if let Some(top_level) = args.fixed_top_level{
+        let last_level_len = if let Some(top_level) = args.fixed_top_level {
             BIT_LENGTH - top_level
-        }  else {
+        } else {
             BIT_LENGTH - YFT::calc_lss_top_level(&elements, start_level, BIT_LENGTH - args.max_lss_level, args.max_last_level_load_factor, args.min_load_factor_difference)
         };
         log.log_time("number of top levels calculated");
@@ -70,7 +68,7 @@ impl YFT {
                 lss_top[top_pos] = DataType::from(pos);
             } else if top_pos + 1 < lss_top.len() {
                 //this right child is the predecessor of the next element
-                lss_top[top_pos+ 1]= DataType::from(pos);
+                lss_top[top_pos + 1] = DataType::from(pos);
             }
         }
         //fill skipped lss top positions
@@ -102,6 +100,8 @@ impl YFT {
             if Some(x_leaf_position) != predecessor_x_leaf {
                 //create new leaf node and insert it in level 0
                 lss_leaf.insert(x_leaf_position, DataType::from(element_array_index));
+            } else {
+                panic!("Two representatives with same leaf may not happen");
             }
 
             //insert branch nodes
@@ -126,7 +126,7 @@ impl YFT {
         }
 
         //return
-        YFT { lss_top, lss_leaf, lss_branch, start_level, last_level_len, elements, group_size }
+        YFT { lss_top, lss_leaf, lss_branch, start_level, last_level_len, elements }
     }
 
     ///prints number of elements + relative fill level per lss level
@@ -302,7 +302,7 @@ impl YFT {
     }
 
     fn predecessor_from_array(&self, query: DataType, index: DataType) -> Option<DataType> {
-        let mut pos = usize::from(index) ;
+        let mut pos = usize::from(index);
         while pos > 0 && self.elements[pos] > query {
             pos -= 1;
         }

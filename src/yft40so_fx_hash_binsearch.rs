@@ -35,7 +35,6 @@ pub struct YFT {
 impl YFT {
     ///elements must be sorted ascending!
     pub fn new(elements: Vec<DataType>, args: &Args, log: &mut Log) -> YFT {
-        let group_size = args.leaf_group_size;
         if elements.len() < 10 {
             panic!("Input to small");
         }
@@ -47,6 +46,7 @@ impl YFT {
         }  else {
             YFT::calc_start_level(&elements, args.min_start_level, BIT_LENGTH - args.max_lss_level, args.min_start_level_load_factor)
         };
+        let group_size = 2usize.pow(start_level as u32);
         log.log_time("start level calculated");
         let last_level_len = if let Some(top_level) = args.fixed_top_level{
             BIT_LENGTH - top_level
@@ -102,6 +102,8 @@ impl YFT {
             if Some(x_leaf_position) != predecessor_x_leaf {
                 //create new leaf node and insert it in level 0
                 lss_leaf.insert(x_leaf_position, DataType::from(element_array_index));
+            } else {
+                panic!("Two representatives with same leaf may not happen");
             }
 
             //insert branch nodes

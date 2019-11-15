@@ -15,6 +15,6 @@ pub fn bin_search_pred(element_list: &Vec<u40>, element: u40) -> Option<u40> {
 }
 
 ///search predecessor with BTree
-pub(crate) fn btree_search_pred(set: &BTreeSet<usize>, element: usize) -> Option<usize> {
+pub fn btree_search_pred(set: &BTreeSet<usize>, element: usize) -> Option<usize> {
     Some(*set.range(0..element).last()?)
 }

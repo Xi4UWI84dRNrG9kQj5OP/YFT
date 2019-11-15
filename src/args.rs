@@ -46,9 +46,6 @@ pub struct Args {
     /// 101 = Use btree instead of Y-Fast-Trie
     #[structopt(short, long, default_value = "1")]
     pub hash_map: usize,
-    /// Number of Elements under one leave (h>=20)
-    #[structopt(short, long, default_value = "40")]
-    pub leaf_group_size: usize,
     /// Log memory usage
     #[structopt(short, long)]
     pub  memory: bool,
