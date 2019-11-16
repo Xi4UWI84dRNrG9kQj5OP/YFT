@@ -44,6 +44,7 @@ pub struct Args {
     /// 22 = Fx, leaf groups, no child pointer, linear search input level
     /// 100 = Use binary search instead of Y-Fast-Trie
     /// 101 = Use btree instead of Y-Fast-Trie
+    /// 102 = Use Mixed binary anf lineat Search instead of Y-Fast-Trie
     #[structopt(short, long, default_value = "1")]
     pub hash_map: usize,
     /// Log memory usage

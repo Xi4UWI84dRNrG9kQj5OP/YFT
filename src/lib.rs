@@ -19,7 +19,7 @@ pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
 pub mod args;
-pub mod extern_pred_search;
+pub mod vec_search;
 
 #[cfg(test)]
 mod tests {
@@ -84,9 +84,9 @@ mod tests {
         let mut results_2 = Vec::new();
         let mut results_r = Vec::new();
         for query in &queries {
-            results_1.push(extern_pred_search::bin_search_pred(&values1, *query));
-            results_2.push(extern_pred_search::bin_search_pred(&values2, *query));
-            results_r.push(extern_pred_search::bin_search_pred(&rnd_values, *query));
+            results_1.push(vec_search::rust_bin_search_pred(&values1, *query));
+            results_2.push(vec_search::rust_bin_search_pred(&values2, *query));
+            results_r.push(vec_search::rust_bin_search_pred(&rnd_values, *query));
         }
 
         {

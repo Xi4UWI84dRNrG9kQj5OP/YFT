@@ -36,7 +36,7 @@ pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
 pub mod args;
-pub mod extern_pred_search;
+pub mod vec_search;
 
 fn main() {
     let args = Args::from_args();
@@ -130,7 +130,7 @@ fn main() {
                 log.print_result(format!("level=-1\telements={}", values.len()));
                 log.log_mem("initialized").log_time("initialized");
 
-                query(&|q| extern_pred_search::bin_search_pred(&values, q), &args, &mut log);
+                query(&|q| vec_search::rust_bin_search_pred(&values, q), &args, &mut log);
             } else if args.hash_map == 101 {
                 // performance is so bad, that possible improvement with u40 won't help
                 let values = get_usize_values(values);
@@ -142,7 +142,15 @@ fn main() {
                 log.print_result(format!("level=-1\telements={}", values.len()));
                 log.log_mem("initialized").log_time("initialized");
 
-                query(&|q| extern_pred_search::btree_search_pred(set, q), &args, &mut log);
+                query(&|q| vec_search::btree_search_pred(set, q), &args, &mut log);
+            } else if args.hash_map == 102 {
+                let values = get_u40_values(values);
+
+                //print stats
+                log.print_result(format!("level=-1\telements={}", values.len()));
+                log.log_mem("initialized").log_time("initialized");
+
+                query(&|q| vec_search::mixed_search_pred(&values, q, args.min_start_level), &args, &mut log);
             } else if args.u40 {
                 //macro to load & test yft
                 macro_rules! testyft40 {

@@ -302,25 +302,25 @@ impl YFT {
     }
 
     fn predecessor_from_array(&self, query: DataType, index: DataType) -> Option<DataType> {
-        let mut pos = usize::from(index);
-        while pos > 0 && self.elements[pos] > query {
-            pos -= 1;
-        }
-        while pos < self.elements.len() && self.elements[pos] < query {
-            pos += 1;
-        }
-        if pos > 0 {
-            //test next query greater than search one
-            debug_assert!(usize::from(pos) >= self.elements.len() || if let Some(successor) = self.elements.get(usize::from(pos)) { successor >= &query } else { true });
-            //test query smaller than searched one
-            debug_assert!(if let Some(predecessor) = self.elements.get(usize::from(pos - 1)) { predecessor < &query } else { true });
-            debug_assert!(usize::from(pos - 1) < self.elements.len());
-            unsafe {
-                Some(*self.elements.get_unchecked(pos - 1))
+        unsafe {
+            let mut pos = usize::from(index);
+            while pos > 0 && self.elements.get_unchecked(pos) > &query {
+                pos -= 1;
             }
-        } else {
-            debug_assert!(self.elements[0] >= query);
-            None
+            while pos < self.elements.len() && self.elements.get_unchecked(pos) < &query {
+                pos += 1;
+            }
+            if pos > 0 {
+                //test next query greater than search one
+                debug_assert!(usize::from(pos) >= self.elements.len() || if let Some(successor) = self.elements.get(usize::from(pos)) { successor >= &query } else { true });
+                //test query smaller than searched one
+                debug_assert!(if let Some(predecessor) = self.elements.get(usize::from(pos - 1)) { predecessor < &query } else { true });
+                debug_assert!(usize::from(pos - 1) < self.elements.len());
+                Some(*self.elements.get_unchecked(pos - 1))
+            } else {
+                debug_assert!(self.elements[0] >= query);
+                None
+            }
         }
     }
 } //impl YFT
