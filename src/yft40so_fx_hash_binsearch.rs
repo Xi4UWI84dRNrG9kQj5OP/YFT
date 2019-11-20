@@ -41,16 +41,16 @@ impl YFT {
         if elements.len() >= usize::from(DataType::max_value()) - 1 {
             panic!("Too many Elements in input");
         }
-        let start_level = if let Some(start_level) = args.fixed_leaf_level{
+        let start_level = if let Some(start_level) = args.fixed_leaf_level {
             start_level
-        }  else {
+        } else {
             YFT::calc_start_level(&elements, args.min_start_level, BIT_LENGTH - args.max_lss_level, args.min_start_level_load_factor)
         };
         let group_size = 2usize.pow(start_level as u32);
         log.log_time("start level calculated");
-        let last_level_len = if let Some(top_level) = args.fixed_top_level{
+        let last_level_len = if let Some(top_level) = args.fixed_top_level {
             BIT_LENGTH - top_level
-        }  else {
+        } else {
             BIT_LENGTH - YFT::calc_lss_top_level(&elements, start_level, BIT_LENGTH - args.max_lss_level, args.max_last_level_load_factor, args.min_load_factor_difference)
         };
         log.log_time("number of top levels calculated");
@@ -70,7 +70,7 @@ impl YFT {
                 lss_top[top_pos] = DataType::from(pos);
             } else if top_pos + 1 < lss_top.len() {
                 //this right child is the predecessor of the next element
-                lss_top[top_pos+ 1]= DataType::from(pos);
+                lss_top[top_pos + 1] = DataType::from(pos);
             }
         }
         //fill skipped lss top positions
@@ -267,12 +267,10 @@ impl YFT {
             } else {
                 match self.lss_branch[search_range.0 - 1].get(&calc_path(query, search_range.0, self.start_level)) {
                     Some(first_element) => {
-                        if *first_element == DataType::max_value() {
-                            panic!("This can't happen, cause it was checked at beginning of this method, that there is a predecessor");
-                        } else {
-                            //first missing node in xft would be left child -> descending shows successor
-                            return self.predecessor_from_array(query, *first_element);
-                        }
+                        //it was checked at beginning of this method, that there is a predecessor
+                        debug_assert!(*first_element != DataType::max_value());
+                        //first missing node in xft would be left child -> descending shows successor
+                        return self.predecessor_from_array(query, *first_element);
                     }
                     None => {
                         panic!("This can't happen, cause it was checked at beginning of this method, that there is a predecessor");
@@ -305,16 +303,16 @@ impl YFT {
 
     fn predecessor_from_array(&self, query: DataType, index: DataType) -> Option<DataType> {
         //get bounds for binary search in elements array
-        let left = if index <= self.group_size as u64  {
+        let left = if index <= self.group_size as u64 {
             0
         } else {
             // predecessor can be smaller first query in leaf
             usize::from(index) - self.group_size
         };
-        let right = if usize::from(index)  + self.group_size * 2 >= self.elements.len() {
+        let right = if usize::from(index) + self.group_size * 2 >= self.elements.len() {
             self.elements.len()
         } else {
-            usize::from(index)  + self.group_size * 2
+            usize::from(index) + self.group_size * 2
         };
         let pos = match self.elements.get(left..right).unwrap().binary_search(&query) {
             Ok(pos) => pos + left,

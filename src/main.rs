@@ -22,6 +22,8 @@ pub mod yft40sn_fx_hash;
 pub mod yft40bn_fx_hash;
 pub mod yft40bo_fx_hash;
 pub mod yft40so_fx_hash_binsearch;
+pub mod yft40so_fnv_binsearch;
+pub mod yft40so_rust_hash_binsearch;
 pub mod yft40so_fx_hash_linsearch;
 pub mod yft40_hash_brown;
 pub mod yft40_im_hash;
@@ -70,6 +72,10 @@ fn main() {
                 }
                 ValueSrc::Uniform { length } => {
                     (nmbrsrc::get_uniform_dist(*length), Vec::new())
+                }
+
+                ValueSrc::UniformRestricted { length , max_value} => {
+                    (nmbrsrc::get_uniform_dist_restricted(*length, *max_value), Vec::new())
                 }
                 ValueSrc::Poisson { length, lambda } => {
                     (nmbrsrc::get_poisson_dist(*length, *lambda), Vec::new())
@@ -185,6 +191,8 @@ fn main() {
                     20 => testyft40!(yft40bo_fx_hash::YFT; values),
                     21 => testyft40!(yft40so_fx_hash_binsearch::YFT; values),
                     22 => testyft40!(yft40so_fx_hash_linsearch::YFT; values),
+                    23 => testyft40!(yft40so_fnv_binsearch::YFT; values),
+                    24 => testyft40!(yft40so_rust_hash_binsearch::YFT; values),
                     _ => panic!("Invalid input for argument hash_map")
                 }
             } else {

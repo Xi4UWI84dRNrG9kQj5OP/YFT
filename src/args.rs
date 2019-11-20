@@ -42,6 +42,8 @@ pub struct Args {
     /// 20 = Fx, leaf groups, child pointer
     /// 21 = Fx, leaf groups, no child pointer, binary search input level
     /// 22 = Fx, leaf groups, no child pointer, linear search input level
+    /// 23 = FNV, leaf groups, no child pointer, binary search input level
+    /// 24 = std, leaf groups, no child pointer, binary search input level
     /// 100 = Use binary search instead of Y-Fast-Trie
     /// 101 = Use btree instead of Y-Fast-Trie
     /// 102 = Use Mixed binary anf lineat Search instead of Y-Fast-Trie
@@ -95,6 +97,10 @@ pub enum ValueSrc {
     },
     Uniform {
         length: usize,
+    },
+    UniformRestricted {
+        length: usize,
+        max_value: usize
     },
     Poisson {
         length: usize,

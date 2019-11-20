@@ -11,8 +11,6 @@ use self::rmps::{Serializer, Deserializer};
 use uint::u40;
 use std::io::Read;
 
-//TODO Filter duplicates?
-
 /// length = number of elements in result
 /// mean = mean point of distribution
 /// deviation = standard deviation
@@ -68,6 +66,14 @@ pub fn get_power_law_dist(length: usize, n: f64) -> Vec<usize> {
 /// result will be ordered
 pub fn get_uniform_dist(length: usize) -> Vec<usize> {
     let mut vec: Vec<usize> = rand::thread_rng().sample_iter(Uniform::from(0..1099511627775)).take(length).collect();
+    vec.sort();
+    vec
+}
+
+/// length = number of elements in result
+/// result will be ordered
+pub fn get_uniform_dist_restricted(length: usize, max_value: usize) -> Vec<usize> {
+    let mut vec: Vec<usize> = rand::thread_rng().sample_iter(Uniform::from(0..max_value)).take(length).collect();
     vec.sort();
     vec
 }

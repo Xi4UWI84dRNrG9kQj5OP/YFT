@@ -37,9 +37,8 @@ pub fn mixed_search_pred(element_list: &Vec<u40>, query: u40, bin_search_steps: 
     unsafe {
         let mut l = 0;
         let mut r = element_list.len();
-        let mut m;
         for _ in 0..bin_search_steps {
-            m = (l + r) / 2;
+            let m = (l + r) / 2;
             if element_list.get_unchecked(m) < &query {
                 l = m;
             } else {
