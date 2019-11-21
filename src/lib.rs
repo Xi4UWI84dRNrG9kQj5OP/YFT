@@ -16,6 +16,7 @@ pub mod yft40bo_fx_hash;
 pub mod yft40so_fx_hash_binsearch;
 pub mod yft40so_fnv_binsearch;
 pub mod yft40so_rust_hash_binsearch;
+pub mod yft40so_boomphf_binsearch;
 pub mod yft40so_fx_hash_linsearch;
 pub mod predecessor_set;
 pub mod nmbrsrc;
@@ -204,6 +205,18 @@ mod tests {
             let yft1 = yft40so_rust_hash_binsearch::YFT::new(values1.clone(), &args, &mut log);
             let yft2 = yft40so_rust_hash_binsearch::YFT::new(values2.clone(), &args, &mut log);
             let yftr = yft40so_rust_hash_binsearch::YFT::new(rnd_values.clone(), &args, &mut log);
+
+            for (pos, query) in queries.iter().enumerate() {
+                assert_eq!(yft1.predecessor(*query), results_1[pos]);
+                assert_eq!(yft2.predecessor(*query), results_2[pos]);
+                assert_eq!(yftr.predecessor(*query), results_r[pos]);
+            }
+        }
+
+        {
+            let yft1 = yft40so_boomphf_binsearch::YFT::new(values1.clone(), &args, &mut log);
+            let yft2 = yft40so_boomphf_binsearch::YFT::new(values2.clone(), &args, &mut log);
+            let yftr = yft40so_boomphf_binsearch::YFT::new(rnd_values.clone(), &args, &mut log);
 
             for (pos, query) in queries.iter().enumerate() {
                 assert_eq!(yft1.predecessor(*query), results_1[pos]);

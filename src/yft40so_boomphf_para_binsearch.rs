@@ -14,39 +14,43 @@ const BIT_LENGTH: usize = 40;
 the leafs descending from v will have key values
 between the quantities (i - 1)2^J + 1 and i* 2^J */
 
-///Impl with no fixed group size and with child pointer
+///Impl with fixed group size and without child pointer
 pub struct YFT {
-    //position of successor of subtree in element vec, DataType::max_value() if None (it should never happen that DataType::max_value() must be used -> array contains all possible elements)
+    //predecessor of non existing subtree vec, DataType::max_value() if None (DataType::max_value() cant't be predecessor)
     lss_top: Vec<DataType>,
-    // Position, node
-    lss_leaf: BoomHashMap<DataType, TreeLeaf>,
-    lss_branch: Vec<BoomHashMap<DataType, TreeBranch>>,
+    // LSS Leaf Level (Position, Array Index)
+    lss_leaf: BoomHashMap<DataType, DataType>,
+    // List of LSS Branch Level (Position, predecessor)
+    lss_branch: Vec<BoomHashMap<DataType, DataType>>,
     //== lss leaf level
     start_level: usize,
     //number of levels that are pooled into one level at the top of the xft
     last_level_len: usize,
     //Original input
     elements: Vec<DataType>,
+    //size that each bucket of elements under one leaf has
+    group_size: usize,
 }
 
 impl YFT {
     ///elements must be sorted ascending!
     pub fn new(elements: Vec<DataType>, args: &Args, log: &mut Log) -> YFT {
-        if elements.len() == 0 {
-            panic!("Input is empty");
+        if elements.len() < 10 {
+            panic!("Input to small");
         }
         if elements.len() >= usize::from(DataType::max_value()) - 1 {
             panic!("Too many Elements in input");
         }
-        let start_level = if let Some(start_level) = args.fixed_leaf_level{
+        let start_level = if let Some(start_level) = args.fixed_leaf_level {
             start_level
-        }  else {
+        } else {
             YFT::calc_start_level(&elements, args.min_start_level, BIT_LENGTH - args.max_lss_level, args.min_start_level_load_factor)
         };
+        let group_size = 2usize.pow(start_level as u32);
         log.log_time("start level calculated");
-        let last_level_len = if let Some(top_level) = args.fixed_top_level{
+        let last_level_len = if let Some(top_level) = args.fixed_top_level {
             BIT_LENGTH - top_level
-        }  else {
+        } else {
             BIT_LENGTH - YFT::calc_lss_top_level(&elements, start_level, BIT_LENGTH - args.max_lss_level, args.max_last_level_load_factor, args.min_load_factor_difference)
         };
         log.log_time("number of top levels calculated");
@@ -55,59 +59,70 @@ impl YFT {
 
         //initialise lss_top
         let mut lss_top = vec![DataType::max_value(); 2usize.pow(last_level_len as u32)];//Bei eingaben bis 2^32 könnte man auch u32 nehmen...
-        for (pos, value) in elements.iter().enumerate() {
+        for (pos, value) in elements.iter().enumerate().step_by(group_size) {
             //check array is sorted
             debug_assert!(pos == 0 || value >= &elements[pos - 1]);
-            let mut lss_top_pos = YFT::lss_top_position(value, last_level_len) as usize;
 
-            //set successors
-            if lss_top[lss_top_pos] == DataType::max_value() && !is_left_child(DataType::from(YFT::lss_top_position(value, last_level_len + 1))) {
-                // for queries on left child of this top level element, this element is its successor
-                lss_top[lss_top_pos] = DataType::from(pos);
+            let top_pos = YFT::lss_top_position(value, last_level_len) as usize;
+            //set predecessor
+            if is_left_child(DataType::from(YFT::lss_top_position(value, last_level_len + 1))) {
+                // for queries on right child of this top level element, this element is its predecessor
+                lss_top[top_pos] = DataType::from(pos);
+            } else if top_pos + 1 < lss_top.len() {
+                //this right child is the predecessor of the next element
+                lss_top[top_pos + 1] = DataType::from(pos);
             }
-            while lss_top_pos > 0 && lss_top[lss_top_pos - 1] == DataType::max_value() {
-                lss_top_pos -= 1;
-                lss_top[lss_top_pos] = DataType::from(pos);
+        }
+        //fill skipped lss top positions
+        let mut lss_top_pos = 0;
+        let mut last_value = DataType::max_value();
+        while lss_top_pos < lss_top.len() {
+            if lss_top[lss_top_pos] == DataType::max_value() {
+                lss_top[lss_top_pos] = last_value;
+            } else {
+                last_value = lss_top[lss_top_pos];
             }
+            lss_top_pos += 1;
         }
         log.log_mem("lss_branch top filled").log_time("lss_branch top filled");
 
         //generate leaf level
-        let mut keys = Vec::new();
-        let mut leaf_data = Vec::new();
-        for (element_array_index, value) in elements.iter().enumerate() {
+        let mut next_level_len = elements.len() / 40;
+        let mut keys = Vec::with_capacity(next_level_len);
+        let mut values = Vec::with_capacity(next_level_len);
+        for (element_array_index, value) in elements.iter().enumerate().step_by(group_size) {
             let leaf_position = calc_path(*value, 0, start_level);
-            if keys.len() == 0 || keys[keys.len() - 1] != leaf_position {
-                keys.push(leaf_position);
-                leaf_data.push(TreeLeaf { first_element: DataType::from(element_array_index) });
-            }
+            keys.push(leaf_position);
+            values.push(DataType::from(element_array_index));
         }
-        let lss_leaf = BoomHashMap::new(keys, leaf_data);
+        next_level_len = values.len() / 2;
+        let lss_leaf = BoomHashMap::new_parallel(keys, values);
 
         //generate branch levels
         let mut lss_branch = Vec::with_capacity(levels - 1);
         for i in 1..levels {
-            keys = Vec::new();
-            let mut data = Vec::new();
-            for (element_array_index, value) in elements.iter().enumerate() { //TODO iter through level above instead of elements
+            keys = Vec::with_capacity(next_level_len);
+            values = Vec::with_capacity(next_level_len);
+            for (element_array_index, value) in elements.iter().enumerate().step_by(group_size) {
                 let is_left_child = is_left_child(calc_path(*value, i - 1, start_level));
                 let branch_position = calc_path(*value, i, start_level);
-                let len = data.len();
+                let len = values.len();
                 if len == 0 || keys[len - 1] != branch_position {
                     keys.push(branch_position);
-                    data.push(TreeBranch { children: if is_left_child { Children::LEFT } else { Children::RIGHT }, descending: DataType::from(element_array_index) });
+                    values.push(DataType::from(element_array_index));
                 } else {
-                    if (!data[len - 1].has_left_child() && is_left_child) || (!data[len - 1].has_right_child() && !is_left_child) {
-                        data[len - 1].children = Children::BOTH;
+                    if is_left_child {
+                        values[len - 1] = DataType::from(element_array_index);
                     }
                 }
             }
-            lss_branch.push(BoomHashMap::new(keys, data));
+            next_level_len = values.len() / 2;
+            lss_branch.push(BoomHashMap::new_parallel(keys, values));
             log.log_mem(format!("lss_branch[{}] filled", i).as_str()).log_time(format!("lss_branch[{}] filled", i).as_str());
         }
 
         //return
-        YFT { lss_top, lss_leaf, lss_branch, start_level, last_level_len, elements }
+        YFT { lss_top, lss_leaf, lss_branch, start_level, last_level_len, elements, group_size }
     }
 
     ///prints number of elements + relative fill level per lss level
@@ -194,17 +209,17 @@ impl YFT {
             // query 0 == lss_leaf, query len()+1 == lss_top
             let mut search_range = (0, self.lss_branch.len() + 1);
             while search_range.0 != search_range.1 {
-                let search_position = (search_range.0 + search_range.1) / 2;
+                let mut search_position = (search_range.0 + search_range.1) / 2;
                 if search_position == self.lss_branch.len() + 1 {
-                    //top level shows directly to predecessors
-                    return self.predec_lss_top(query);
+                    //top level may only be used iff there are no existing nodes below in search path
+                    search_position -= 1;
                 }
 
                 if search_position == 0 {
                     //leaf level
                     match self.lss_leaf.get(&calc_path(query, search_position, self.start_level)) {
-                        Some(leaf) => {
-                            return self.predecessor_from_array(query, leaf.first_element);
+                        Some(first_element) => {
+                            return self.predecessor_from_array(query, *first_element);
                         }
                         None => {
                             //there is no node -> search higher
@@ -235,9 +250,9 @@ impl YFT {
             if search_range.0 == 0 {
                 //leaf level
                 match self.lss_leaf.get(&calc_path(query, search_range.0, self.start_level)) {
-                    Some(leaf) => {
+                    Some(first_element) => {
                         //searched note is in Tree -> return its predecessor
-                        return self.predecessor_from_array(query, leaf.first_element);
+                        return self.predecessor_from_array(query, *first_element);
                     }
                     None => {
                         panic!("This can't happen, cause it was checked at beginning of this method, that there is a predecessor");
@@ -245,15 +260,11 @@ impl YFT {
                 }
             } else {
                 match self.lss_branch[search_range.0 - 1].get(&calc_path(query, search_range.0, self.start_level)) {
-                    Some(branch) => {
-                        if !branch.has_right_child() {
-                            //first missing node in xft would be right child -> descending shows predecessor
-                            return self.element_from_array(query, branch.descending);
-                        } else {
-                            //first missing node in xft would be left child -> descending shows successor
-                            debug_assert!(!branch.has_left_child());
-                            return if branch.descending == 0 { None } else { self.element_from_array(query, branch.descending - 1 as u32) };
-                        }
+                    Some(first_element) => {
+                        //it was checked at beginning of this method, that there is a predecessor
+                        debug_assert!(*first_element != DataType::max_value());
+                        //first missing node in xft would be left child -> descending shows successor
+                        return self.predecessor_from_array(query, *first_element);
                     }
                     None => {
                         panic!("This can't happen, cause it was checked at beginning of this method, that there is a predecessor");
@@ -276,72 +287,46 @@ impl YFT {
         });
         unsafe {
             let pos = *self.lss_top.get_unchecked(YFT::lss_top_position(&query, self.last_level_len));
-            if pos == DataType::max_value()  {
-                //case there is no bigger value
-                if self.elements.len() > 0 && *self.elements.get_unchecked(self.elements.len() - 1) < query {
-                    return self.element_from_array(query, DataType::from(self.elements.len() - 1));
-                }
-                //assert there is no smaller value in element array
-                debug_assert!(self.elements.len() == 0 || self.elements[0] > query);
-                return None;
+            if pos == DataType::max_value() {
+                panic!("This can't happen, cause it was checked at beginning predecessor method, that there is a predecessor");
             } else {
-                return self.element_from_array(query, pos - 1 as u32);
+                return self.predecessor_from_array(query, pos);
             }
         }
     }
 
-    /// query = predecessor query
-    /// index = predecessor position in array
-    fn element_from_array(&self, query: DataType, index: DataType) -> Option<DataType> {
-        //test next value greater than search one
-        debug_assert!(usize::from(index) + 1 >= self.elements.len() || if let Some(successor) = self.elements.get(usize::from(index) + 1) { successor >= &query } else { true });
-        //test value smaller than searched one
-        debug_assert!(if let Some(predecessor) = self.elements.get(usize::from(index)) { predecessor < &query } else { true });
-        debug_assert!(usize::from(index) < self.elements.len());
-        unsafe {
-            return Some(*self.elements.get_unchecked(usize::from(index)));
-        }
-    }
-
     fn predecessor_from_array(&self, query: DataType, index: DataType) -> Option<DataType> {
-        let mut index = index;
-        while index < self.elements.len() as u64 && self.elements[usize::from(index)] < query {
-            index += 1 as u32;
+        //get bounds for binary search in elements array
+        let left = if index <= self.group_size as u64 {
+            0
+        } else {
+            // predecessor can be smaller first query in leaf
+            usize::from(index) - self.group_size
+        };
+        let right = if usize::from(index) + self.group_size * 2 >= self.elements.len() {
+            self.elements.len()
+        } else {
+            usize::from(index) + self.group_size * 2
+        };
+        let pos = match self.elements.get(left..right).unwrap().binary_search(&query) {
+            Ok(pos) => pos + left,
+            Err(pos) => pos + left
+        };
+        if pos > 0 {
+            //test next query greater than search one
+            debug_assert!(usize::from(pos) >= self.elements.len() || if let Some(successor) = self.elements.get(usize::from(pos)) { successor >= &query } else { true });
+            //test query smaller than searched one
+            debug_assert!(if let Some(predecessor) = self.elements.get(usize::from(pos - 1)) { predecessor < &query } else { true });
+            debug_assert!(usize::from(pos - 1) < self.elements.len());
+            unsafe {
+                Some(*self.elements.get_unchecked(pos - 1))
+            }
+        } else {
+            debug_assert!(self.elements[0] >= query);
+            None
         }
-        return if index == 0 { None } else { self.element_from_array(query, index - 1 as u32) };
     }
 } //impl YFT
-
-bitflags! {
-    struct Children: u8 {
-        const LEFT = 0b00000001;
-        const RIGHT = 0b00000010;
-        const BOTH = Self::LEFT.bits | Self::RIGHT.bits;
-    }
-}
-
-#[derive(Debug)]
-struct TreeBranch {
-    children: Children,
-    //0 None, 1 == left child, 2 == right child, 3 == both
-    descending: DataType, //Position of predecelement in elementarray
-}
-
-impl TreeBranch {
-    fn has_left_child(&self) -> bool {
-        self.children.contains(Children::LEFT)
-    }
-
-    fn has_right_child(&self) -> bool {
-        self.children.contains(Children::RIGHT)
-    }
-}
-
-#[derive(Debug)]
-struct TreeLeaf {
-    first_element: DataType,
-    //Position of first element in Value Vector
-}
 
 fn calc_path(position: DataType, lss_level: usize, start_level: usize) -> DataType {
     position >> DataType::from(lss_level + start_level)
