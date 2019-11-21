@@ -160,15 +160,44 @@ fn main() {
 
                 query(&|q| vec_search::mixed_search_pred(&values, q, args.min_start_level), &args, &mut log);
             } else if args.u40 {
-                //macro to load & test yft
-                macro_rules! testyft40 {
+                let values = get_u40_values(values);
+
+                if args.search_stats {
+                    if args.hash_map != 21 {
+                        panic!("search stats can not be made with -h {} and -u option", args.hash_map);
+                    }
+                    if let Some(ref file) = args.queries {
+                        let yft = yft40so_fx_hash_binsearch::YFT::new(values, &args, &mut log);
+                        let test_values: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
+                        let number = test_values.len();
+                        log.log_time(&format!("queries loaded\tqueries={}", number));
+                        let mut stats = vec![vec![0; 44]; 44];
+                        let _: Vec<u40> = test_values.into_iter().map(|v| {
+                            let (r, e, c) = yft.predecessor_with_stats(v);
+                            stats[e as usize][c as usize] += 1;
+                            r.unwrap_or(u40::from(0))
+                        }).collect();
+                        for e in 0..43 {
+                            for c in 0..43 {
+                                if stats[e][c] > 0 {
+                                    log.print_result(format!("Exit={}\tSearchSteps={}\tfrequency={}", e, c, stats[e][c]));
+                                }
+                            }
+                        }
+                        log.log_time(&format!("queries processed\tnumber={}", number));
+                    } else {
+                        panic!("search stats requires query file (-q)");
+                    }
+                } else {
+                    //macro to load & test yft
+                    macro_rules! testyft40 {
                     (  $yft:ty; $values:expr ) => {
                         {
                             let yft =  <$yft>::new($values, &args, &mut log);
 
                             log.log_mem("initialized").log_time("initialized");
 
-                            query(&|q| yft.predecessor(u40::from(q)), &args, &mut log);
+                            query(&|q| yft.predecessor(q), &args, &mut log);
                             if args.memory {
                                 yft.print_stats(&log);
                             }
@@ -176,28 +205,27 @@ fn main() {
                     };
                 }
 
-                let values = get_u40_values(values);
-
-                match args.hash_map {
-                    0 => testyft40!(yft40_rust_hash::YFT; values),
-                    1 => testyft40!(yft40sn_fx_hash::YFT; values),
-                    2 => testyft40!(yft40_hash_brown::YFT; values),
-                    3 => testyft40!(yft40_im_hash::YFT; values),
-                    4 => testyft40!(yft40_boomphf_hash::YFT; values),
-                    5 => testyft40!(yft40_boomphf_hash_para::YFT; values),
-                    6 => testyft40!(yft40_fx_hash_bottom_up_construction::YFT; values),
-                    7 => testyft40!(yft40_fx_hash_capacity::YFT; values),
-                    8 => testyft40!(yft40_fx_hash_no_level::YFT; values),
-                    9 => testyft40!(yft40_fnv_hash::YFT; values),
-                    10 => testyft40!(yft40bn_fx_hash::YFT; values),
-                    20 => testyft40!(yft40bo_fx_hash::YFT; values),
-                    21 => testyft40!(yft40so_fx_hash_binsearch::YFT; values),
-                    22 => testyft40!(yft40so_fx_hash_linsearch::YFT; values),
-                    23 => testyft40!(yft40so_fnv_binsearch::YFT; values),
-                    24 => testyft40!(yft40so_rust_hash_binsearch::YFT; values),
-                    25 => testyft40!(yft40so_boomphf_binsearch::YFT; values),
-                    26 => testyft40!(yft40so_boomphf_para_binsearch::YFT; values),
-                    _ => panic!("Invalid input for argument hash_map")
+                    match args.hash_map {
+                        0 => testyft40!(yft40_rust_hash::YFT; values),
+                        1 => testyft40!(yft40sn_fx_hash::YFT; values),
+                        2 => testyft40!(yft40_hash_brown::YFT; values),
+                        3 => testyft40!(yft40_im_hash::YFT; values),
+                        4 => testyft40!(yft40_boomphf_hash::YFT; values),
+                        5 => testyft40!(yft40_boomphf_hash_para::YFT; values),
+                        6 => testyft40!(yft40_fx_hash_bottom_up_construction::YFT; values),
+                        7 => testyft40!(yft40_fx_hash_capacity::YFT; values),
+                        8 => testyft40!(yft40_fx_hash_no_level::YFT; values),
+                        9 => testyft40!(yft40_fnv_hash::YFT; values),
+                        10 => testyft40!(yft40bn_fx_hash::YFT; values),
+                        20 => testyft40!(yft40bo_fx_hash::YFT; values),
+                        21 => testyft40!(yft40so_fx_hash_binsearch::YFT; values),
+                        22 => testyft40!(yft40so_fx_hash_linsearch::YFT; values),
+                        23 => testyft40!(yft40so_fnv_binsearch::YFT; values),
+                        24 => testyft40!(yft40so_rust_hash_binsearch::YFT; values),
+                        25 => testyft40!(yft40so_boomphf_binsearch::YFT; values),
+                        26 => testyft40!(yft40so_boomphf_para_binsearch::YFT; values),
+                        _ => panic!("Invalid input for argument hash_map")
+                    }
                 }
             } else {
                 if args.hash_map != 1 {
@@ -247,15 +275,16 @@ fn main() {
 //load queries & apply them, if option is set
 fn query<T: From<usize> + std::fmt::Debug>(f: &dyn Fn(T) -> Option<T>, args: &Args, log: &mut log::Log) {
     if let Some(ref file) = args.queries {
-        let queries = nmbrsrc::load(file.to_str().unwrap()).unwrap();
+        let queries: Vec<T> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| T::from(v)).collect();
         let number = queries.len();
+        log.log_time(&format!("queries loaded\tqueries={}", number));
         if args.result {
             for query in queries {
-                println!("{:?}", f(T::from(query)));
+                println!("{:?}", f(query));
             }
         } else {
             for query in queries {
-                f(T::from(query));
+                f(query);
             }
         }
         log.log_time(&format!("queries processed\tqueries={}", number));
