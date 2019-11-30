@@ -8,7 +8,7 @@ use predecessor_set::PredecessorSet;
 
 pub type DataType = u40;
 
-const BIT_LENGTH: usize = 40; //TODO auf schnellstes übertragen
+const BIT_LENGTH: usize = 40;
 
 /*If v is a node at a height j, then all
 the leafs descending from v will have key values
@@ -287,11 +287,9 @@ impl YFT {
         });
         unsafe {
             let predecessor = *self.lss_top.get_unchecked(YFT::lss_top_position(&query, self.last_level_len));
-            if predecessor == DataType::max_value() {
-                panic!("This can't happen, cause it was checked at beginning predecessor method, that there is a predecessor");
-            } else {
-                return Some(predecessor);
-            }
+            //it was checked at beginning, that there is a predecessor
+            debug_assert!(predecessor != DataType::max_value());
+            return Some(predecessor);
         }
     }
 

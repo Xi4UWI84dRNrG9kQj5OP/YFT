@@ -37,7 +37,7 @@ pub struct Args {
     /// 6 = Fx bottom up construction
     /// 7 = Fx capacity construction
     /// 8 = Fx no level
-    /// 9 = FNV
+    /// 9 = FNV, No fixed leaf groups, no child pointer
     /// 10 = Fx, No fixed leaf groups, child pointer
     /// 20 = Fx, leaf groups, child pointer
     /// 21 = Fx, leaf groups, no child pointer, binary search input level
