@@ -33,7 +33,8 @@ pub mod yft40_boomphf_hash;
 pub mod yft40_boomphf_hash_para;
 pub mod yft40_fx_hash_bottom_up_construction;
 pub mod yft40_fx_hash_capacity;
-pub mod yft40_fx_hash_no_level;
+pub mod yft40_no_level;
+pub mod yft40_no_level_bin;
 pub mod yft40_fnv_hash;
 //pub mod yft40_fx_hash_comp;
 pub mod predecessor_set;
@@ -76,8 +77,9 @@ fn main() {
                     (nmbrsrc::get_uniform_dist(*length), Vec::new())
                 }
 
-                ValueSrc::UniformRestricted { length, max_value } => {
-                    (nmbrsrc::get_uniform_dist_restricted(*length, *max_value), Vec::new())
+                ValueSrc::UniformRestricted { length, path } => {
+                    values = nmbrsrc::load_u40_tim(path.to_str().unwrap());
+                    (nmbrsrc::get_uniform_dist_restricted(*length, values[0]-1, values[values.len()-1]+1), Vec::new())
                 }
                 ValueSrc::Poisson { length, lambda } => {
                     (nmbrsrc::get_poisson_dist(*length, *lambda), Vec::new())

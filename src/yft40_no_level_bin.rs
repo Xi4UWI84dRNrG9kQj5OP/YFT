@@ -1,5 +1,3 @@
-extern crate rustc_hash;
-
 use args::Args;
 use log::Log;
 use uint::u40;
@@ -32,7 +30,7 @@ impl YFT {
         if elements.len() >= usize::from(DataType::max_value()) - 1 {
             panic!("Too many Elements in input");
         }
-        let last_level_len = if let Some(top_level) = args.fixed_top_level{
+        let last_level_len = if let Some(top_level) = args.fixed_top_level {
             BIT_LENGTH - top_level
         }  else {
             BIT_LENGTH - YFT::calc_lss_top_level(&elements, args.min_start_level, BIT_LENGTH - args.max_lss_level, args.max_last_level_load_factor, args.min_load_factor_difference)
@@ -113,24 +111,47 @@ impl YFT {
     //query may not belong to existing node
     pub fn predecessor(&self, query: DataType) -> Option<DataType> {
         unsafe {
-            let mut pos = usize::from(*self.lss_top.get_unchecked(YFT::lss_top_position(&query, self.last_level_len)));
-            if pos == usize::from(DataType::max_value()) && self.elements.len() > 0 && *self.elements.get_unchecked(0) < query {
-                pos = self.elements.len() - 1;
-                if *self.elements.get_unchecked(pos) < query {
-                    return self.element_from_array(query, pos);
+            let position = YFT::lss_top_position(&query, self.last_level_len);
+           let mut left = if position == 0 {
+                0
+            } else {
+               let mut left = usize::from(*self.lss_top.get_unchecked(position) - 1);
+               if left == usize::from(DataType::max_value()) {
+                   left = self.elements.len() - 1;
+                   if *self.elements.get_unchecked(left) < query {
+                       return self.element_from_array(query, left);
+                   } else {
+                       //if last element is > query there is none
+                       return None;
+                   }
+               }
+               left
+            };
+            let mut right = usize::from(*self.lss_top.get_unchecked(position));
+            if right == usize::from(DataType::max_value()) && *self.elements.get_unchecked(0) < query {
+                right = self.elements.len() - 1;
+                if *self.elements.get_unchecked(right) < query {
+                    return self.element_from_array(query, right);
                 }
             }
-            debug_assert!(pos == 0 || self.elements[pos] >= query);
-            while pos > 0 && *self.elements.get_unchecked(pos - 1) >= query {
-                pos = pos - 1;
-            }
-            debug_assert!(pos == 0 || self.elements[pos] >= query);
-            if pos == 0 {
-                //assert there is no smaller value in element array
-                debug_assert!(self.elements.len() == 0 || self.elements[0] >= query);
-                None
+            debug_assert!(right == 0 || self.elements[right] >= query);
+            let pos = match self.elements.get(left..right).unwrap().binary_search(&query) {
+                Ok(pos) => pos + left,
+                Err(pos) => pos + left
+            };
+
+            if pos > 0 {
+                //test next query greater than search one
+                debug_assert!(usize::from(pos) >= self.elements.len() || if let Some(successor) = self.elements.get(usize::from(pos)) { successor >= &query } else { true });
+                //test query smaller than searched one
+                debug_assert!(if let Some(predecessor) = self.elements.get(usize::from(pos - 1)) { predecessor < &query } else { true });
+                debug_assert!(usize::from(pos - 1) < self.elements.len());
+                unsafe {
+                    Some(*self.elements.get_unchecked(pos - 1))
+                }
             } else {
-                self.element_from_array(query, pos - 1)
+                debug_assert!(self.elements[0] >= query);
+                None
             }
         }
     }

@@ -44,7 +44,7 @@ impl YFT {
             YFT::calc_start_level(&elements, args.min_start_level, BIT_LENGTH - args.max_lss_level, args.min_start_level_load_factor)
         };
         log.log_time("start level calculated");
-        let last_level_len = if let Some(top_level) = args.fixed_top_level{
+        let last_level_len = if let Some(top_level) = args.fixed_top_level {
             BIT_LENGTH - top_level
         }  else {
             BIT_LENGTH - YFT::calc_lss_top_level(&elements, start_level, BIT_LENGTH - args.max_lss_level, args.max_last_level_load_factor, args.min_load_factor_difference)

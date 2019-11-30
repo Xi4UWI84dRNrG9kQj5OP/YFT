@@ -102,7 +102,8 @@ pub enum ValueSrc {
     },
     UniformRestricted {
         length: usize,
-        max_value: usize,
+        #[structopt(parse(from_os_str))]
+        path: PathBuf,
     },
     Poisson {
         length: usize,
