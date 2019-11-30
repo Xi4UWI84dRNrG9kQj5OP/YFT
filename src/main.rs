@@ -78,8 +78,8 @@ fn main() {
                 }
 
                 ValueSrc::UniformRestricted { length, path } => {
-                    values = nmbrsrc::load_u40_tim(path.to_str().unwrap());
-                    (nmbrsrc::get_uniform_dist_restricted(*length, values[0]-1, values[values.len()-1]+1), Vec::new())
+                    let values = nmbrsrc::load_u40_tim(path.to_str().unwrap()).unwrap();
+                    (nmbrsrc::get_uniform_dist_restricted(*length, usize::from(values[0])-1, usize::from(values[values.len()-1])+1), Vec::new())
                 }
                 ValueSrc::Poisson { length, lambda } => {
                     (nmbrsrc::get_poisson_dist(*length, *lambda), Vec::new())
@@ -216,7 +216,7 @@ fn main() {
                         5 => testyft40!(yft40_boomphf_hash_para::YFT; values),
                         6 => testyft40!(yft40_fx_hash_bottom_up_construction::YFT; values),
                         7 => testyft40!(yft40_fx_hash_capacity::YFT; values),
-                        8 => testyft40!(yft40_fx_hash_no_level::YFT; values),
+                        8 => testyft40!(yft40_no_level::YFT; values),
                         9 => testyft40!(yft40_fnv_hash::YFT; values),
                         10 => testyft40!(yft40bn_fx_hash::YFT; values),
                         20 => testyft40!(yft40bo_fx_hash::YFT; values),

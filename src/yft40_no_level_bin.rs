@@ -115,7 +115,7 @@ impl YFT {
            let mut left = if position == 0 {
                 0
             } else {
-               let mut left = usize::from(*self.lss_top.get_unchecked(position) - 1);
+               let mut left = usize::from(*self.lss_top.get_unchecked(position)) - 1;
                if left == usize::from(DataType::max_value()) {
                    left = self.elements.len() - 1;
                    if *self.elements.get_unchecked(left) < query {
