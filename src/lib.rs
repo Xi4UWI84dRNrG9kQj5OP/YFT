@@ -75,7 +75,7 @@ mod tests {
             .iter().map(|v: &u64| u40::from(*v)).collect();
         let rnd_values = nmbrsrc::get_uniform_dist(32768).into_iter().map(|v| u40::from(v)).collect();
         let rnd_queries: Vec<u40> = nmbrsrc::get_uniform_dist(32768).into_iter().map(|v| u40::from(v)).collect();
-        let queries: Vec<u40> = vec![
+        let mut queries: Vec<u40> = vec![
             0, 1, 39,
             40, 41, 256, 257, 701, 702, 739, 740,
             4294967295, 4294967296, 4294967297,    //grenze top level (2^32)
@@ -84,6 +84,7 @@ mod tests {
             10804527103, 10804527104, 10804527105, 10804527144, 10804527200, 10804530804, 10804530805, 50804530804, 100804530903, 100804530904, 100804530905, 100804530950, 100804531004, 100804531005,
             549755813888, 1000000000000,
             1099511627773, 1099511627774, 1099511627775].iter().map(|v: &u64| u40::from(*v)).collect();
+        queries.extend(&rnd_queries);
 
         let mut results_1 = Vec::new();
         let mut results_2 = Vec::new();
@@ -227,17 +228,17 @@ mod tests {
             }
         }
 
-//        { TODO WIP
-//            let yft1 = yft40sn_bin_fx_hash::YFT::new(values1.clone(), &args, &mut log);
-//            let yft2 = yft40sn_bin_fx_hash::YFT::new(values2.clone(), &args, &mut log);
-//            let yftr = yft40sn_bin_fx_hash::YFT::new(rnd_values.clone(), &args, &mut log);
-//
-//            for (pos, query) in queries.iter().enumerate() {
-//                assert_eq!(yft1.predecessor(*query), results_1[pos]);
-//                assert_eq!(yft2.predecessor(*query), results_2[pos]);
-//                assert_eq!(yftr.predecessor(*query), results_r[pos]);
-//            }
-//        }
+        {
+            let yft1 = yft40sn_bin_fx_hash::YFT::new(values1.clone(), &args, &mut log);
+            let yft2 = yft40sn_bin_fx_hash::YFT::new(values2.clone(), &args, &mut log);
+            let yftr = yft40sn_bin_fx_hash::YFT::new(rnd_values.clone(), &args, &mut log);
+
+            for (pos, query) in queries.iter().enumerate() {
+                assert_eq!(yft1.predecessor(*query), results_1[pos]);
+                assert_eq!(yft2.predecessor(*query), results_2[pos]);
+                assert_eq!(yftr.predecessor(*query), results_r[pos]);
+            }
+        }
 
         {
             let yft1 = yft40so_fx_hash_small_groups::YFT::new(values1.clone(), &args, &mut log);

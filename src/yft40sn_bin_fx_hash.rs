@@ -96,7 +96,7 @@ impl YFT {
 
         //fill
         let mut predecessor_x_leaf: Option<DataType> = None;
-        let mut max_leaf_group_size: usize = 0;
+        let mut max_leaf_group_size: usize = 1;
         let mut leaf_group_size: usize = 0;
         for (element_array_index, value) in elements.iter().enumerate() {
             let x_leaf_position = calc_path(*value, 0, start_level);
@@ -297,11 +297,9 @@ impl YFT {
         });
         unsafe {
             let predecessor = *self.lss_top.get_unchecked(YFT::lss_top_position(&query, self.last_level_len));
-            if predecessor == DataType::max_value() {
-                panic!("This can't happen, cause it was checked at beginning predecessor method, that there is a predecessor");
-            } else {
-                return Some(predecessor);
-            }
+            //it was checked at beginning, that there is a predecessor
+            debug_assert!(predecessor != DataType::max_value());
+            return Some(predecessor);
         }
     }
 

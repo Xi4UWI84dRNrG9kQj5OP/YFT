@@ -59,7 +59,6 @@ impl YFT {
 
         //initialise lss_top
         let mut lss_top = vec![DataType::max_value(); 2usize.pow(last_level_len as u32)];//Bei eingaben bis 2^32 könnte man auch u32 nehmen...
-        dbg!(group_size);
         for (pos, value) in elements.iter().enumerate().step_by(group_size) {
             //check array is sorted
             debug_assert!(pos == 0 || value >= &elements[pos - 1]);
