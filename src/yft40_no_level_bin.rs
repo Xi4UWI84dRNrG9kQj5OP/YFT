@@ -11,7 +11,7 @@ const BIT_LENGTH: usize = 40;
 the leafs descending from v will have key values
 between the quantities (i - 1)2^J + 1 and i* 2^J */
 
-///Impl without xft (far away from yft)
+///40 bit Impl without xft (far away from yft) and binary search below xft leafs
 pub struct YFT {
     //position of predecessor of subtree in element vec, DataType::max_value() if None (it should never happen that DataType::max_value() must be used -> array contains all possible elements)
     lss_top: Vec<DataType>,
@@ -112,7 +112,7 @@ impl YFT {
     pub fn predecessor(&self, query: DataType) -> Option<DataType> {
         unsafe {
             let position = YFT::lss_top_position(&query, self.last_level_len);
-           let mut left = if position == 0 {
+           let left = if position == 0 {
                 0
             } else {
                let mut left = usize::from(*self.lss_top.get_unchecked(position)) - 1;
@@ -146,9 +146,7 @@ impl YFT {
                 //test query smaller than searched one
                 debug_assert!(if let Some(predecessor) = self.elements.get(usize::from(pos - 1)) { predecessor < &query } else { true });
                 debug_assert!(usize::from(pos - 1) < self.elements.len());
-                unsafe {
-                    Some(*self.elements.get_unchecked(pos - 1))
-                }
+                Some(*self.elements.get_unchecked(pos - 1))
             } else {
                 debug_assert!(self.elements[0] >= query);
                 None

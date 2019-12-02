@@ -1,3 +1,5 @@
+/// this module contains some search methods on vectors
+
 use uint::u40;
 use std::collections::BTreeSet;
 

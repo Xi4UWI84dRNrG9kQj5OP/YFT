@@ -1,5 +1,8 @@
 extern crate stats_alloc;
 
+/// This file contains a log struct
+/// it is used for Logging time, space and logging of inner behaviour like the number of elements, nodes, queries or search steps
+
 use std::alloc::System;
 //Global
 use self::stats_alloc::{StatsAlloc, INSTRUMENTED_SYSTEM, Region};

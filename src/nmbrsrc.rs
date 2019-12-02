@@ -3,6 +3,8 @@ extern crate rand_distr;
 extern crate serde;
 extern crate rmp_serde as rmps;
 
+/// this module is used to generate, save and load vectors of numbers
+
 use self::rand::{distributions::Uniform, Rng};
 use self::rand_distr::{Poisson, Normal, Distribution};
 use std::fs::File;
@@ -92,6 +94,7 @@ pub fn save(values: &Vec<usize>, path: &str) -> std::io::Result<()> {
     }
 }
 
+// load usize values serialized with this module
 pub fn load(path: &str) -> std::io::Result<Vec<usize>> {
     let input = File::open(path)?;
     let mut deserializer = Deserializer::new(input);
@@ -99,6 +102,7 @@ pub fn load(path: &str) -> std::io::Result<Vec<usize>> {
     Ok(values)
 }
 
+// load u64 values serialized with this module
 pub fn load_u64_serialized(path: &str) -> std::io::Result<Vec<usize>> {
     let input = File::open(path)?;
     let mut deserializer = Deserializer::new(input);
@@ -107,6 +111,7 @@ pub fn load_u64_serialized(path: &str) -> std::io::Result<Vec<usize>> {
     Ok(values.into_iter().map(|v| v as usize).collect())
 }
 
+// load u40 values serialized with this module
 pub fn load_u40_serialized(path: &str) -> std::io::Result<Vec<u40>> {
     let input = File::open(path)?;
     let mut deserializer = Deserializer::new(input);
@@ -114,6 +119,7 @@ pub fn load_u40_serialized(path: &str) -> std::io::Result<Vec<u40>> {
     Ok(values)
 }
 
+// load u40 values without any separator or other information
 pub fn load_u40_fit(path: &str) -> std::io::Result<Vec<u40>> {
     let mut input = File::open(path)?;
     let number_of_values = std::fs::metadata(path)?.len() as usize / 5;
@@ -138,6 +144,7 @@ pub fn load_u40_fit(path: &str) -> std::io::Result<Vec<u40>> {
     Ok(values)
 }
 
+/// load u40 values with length of vector at start
 pub fn load_u40_tim(path: &str) -> std::io::Result<Vec<u40>> {
     let mut input = File::open(path)?;
     let mut lenv = Vec::new();

@@ -14,7 +14,7 @@ const BIT_LENGTH: usize = 40;
 the leafs descending from v will have key values
 between the quantities (i - 1)2^J + 1 and i* 2^J */
 
-///Impl with fixed group size and with child pointer
+///40 bit Impl with fixed group size (by level) and with child pointer and binary search below xft leafs
 pub struct YFT {
     //predecessor of non existing subtree vec, DataType::max_value() if None (DataType::max_value() cant't be predecessor)
     lss_top: Vec<DataType>,

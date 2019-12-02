@@ -8,6 +8,10 @@ extern crate uint;
 extern crate stats_alloc;
 extern crate im_rc;
 
+/// Main module
+/// all "cargo run" calls go through this code
+/// "cargo test" calls we go trough lib.rs
+/// see Args.rs for more Information about command line Arguments
 
 pub use yft64::YFT;
 use structopt::StructOpt;
@@ -115,7 +119,7 @@ fn main() {
         }
 
         if args.element_length_test && i > 0 {
-            //decrease number of elements
+            //decrease number of elements if option is set
             if values.0.len() == 0 {
                 values = (values.0, values.1.iter().step_by(2usize.pow(i)).map(|v| v.clone()).collect());
                 if values.1.len() < 2 {
@@ -134,7 +138,7 @@ fn main() {
         log.log_mem("values loaded").log_time("values loaded");
 
         {
-            if args.hash_map == 100 {
+            if args.hash_map == 100 { //binary search
                 let values = get_u40_values(values);
 
                 //print stats
@@ -142,7 +146,7 @@ fn main() {
                 log.log_mem("initialized").log_time("initialized");
 
                 query(&|q| vec_search::rust_bin_search_pred(&values, q), &args, &mut log);
-            } else if args.hash_map == 101 {
+            } else if args.hash_map == 101 { //btree
                 // performance is so bad, that possible improvement with u40 won't help
                 let values = get_usize_values(values);
                 let set = &(&values).into_iter().fold(BTreeSet::new(), |mut set, value| {
@@ -154,7 +158,7 @@ fn main() {
                 log.log_mem("initialized").log_time("initialized");
 
                 query(&|q| vec_search::btree_search_pred(set, q), &args, &mut log);
-            } else if args.hash_map == 102 {
+            } else if args.hash_map == 102 { //mixed binary linear search
                 let values = get_u40_values(values);
 
                 //print stats

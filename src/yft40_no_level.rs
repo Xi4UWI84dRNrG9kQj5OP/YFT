@@ -11,7 +11,7 @@ const BIT_LENGTH: usize = 40;
 the leafs descending from v will have key values
 between the quantities (i - 1)2^J + 1 and i* 2^J */
 
-///Impl without xft (far away from yft)
+///40 bit Impl without xft (far away from yft)
 pub struct YFT {
     //position of predecessor of subtree in element vec, DataType::max_value() if None (it should never happen that DataType::max_value() must be used -> array contains all possible elements)
     lss_top: Vec<DataType>,

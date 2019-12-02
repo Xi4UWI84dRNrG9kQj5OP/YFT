@@ -7,6 +7,10 @@ extern crate bitflags;
 extern crate uint;
 extern crate stats_alloc;
 
+/// this file will be called by "cargo test"
+/// It contains some correctness tests for different yft implementations
+/// see main.rs for "cargo run"
+
 pub mod yft40_rust_hash;
 pub mod yft40sn_fx_hash;
 pub mod yft40sn_bin_fx_hash;
@@ -28,7 +32,6 @@ pub mod vec_search;
 
 #[cfg(test)]
 mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
     use args::{Args, ValueSrc};
     use uint::u40;
