@@ -73,11 +73,8 @@ pub fn get_uniform_dist(length: usize) -> Vec<usize> {
 }
 
 /// length = number of elements in result
-/// result will be ordered
 pub fn get_uniform_dist_restricted(length: usize, min_value: usize, max_value: usize) -> Vec<usize> {
-    let mut vec: Vec<usize> = rand::thread_rng().sample_iter(Uniform::from(min_value..max_value)).take(length).collect();
-    vec.sort();
-    vec
+    rand::thread_rng().sample_iter(Uniform::from(min_value..max_value)).take(length).collect()
 }
 
 ///If File exists, values will be loaded & written sorted with new values. In this case.
