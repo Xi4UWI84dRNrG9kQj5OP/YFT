@@ -108,6 +108,11 @@ pub enum ValueSrc {
         #[structopt(parse(from_os_str))]
         path: PathBuf,
     },
+    UniformRestrictedF {
+        length: usize,
+        #[structopt(parse(from_os_str))]
+        path: PathBuf,
+    },
     Poisson {
         length: usize,
         lambda: f64,
