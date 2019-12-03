@@ -57,7 +57,7 @@ fn main() {
         if let Some(name) = &args.run_name {
             log::Log::new(name.to_string())
         } else {
-            log::Log::new(nmbrsrc::get_uniform(1)[0].to_string())
+            log::Log::new(nmbrsrc::get_uniform_dist(1)[0].to_string())
         };
 
     //create memory logger if option is set
