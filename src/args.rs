@@ -48,6 +48,7 @@ pub struct Args {
     /// 25 = boomphf, leaf groups, no child pointer, binary search input level
     /// 26 = boomphf with parallel construction, leaf groups, no child pointer, binary search input level
     /// 27 = Fx, dynamic leaf groups, no child pointer, binary search input level
+    /// 28 = im-rc, leaf groups, no child pointer, binary search input level
     /// 100 = Use binary search instead of Y-Fast-Trie
     /// 101 = Use btree instead of Y-Fast-Trie
     /// 102 = Use Mixed binary anf lineat Search instead of Y-Fast-Trie

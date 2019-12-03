@@ -28,6 +28,7 @@ pub mod yft40bo_fx_hash;
 pub mod yft40so_fx_hash_binsearch;
 pub mod yft40so_fnv_binsearch;
 pub mod yft40so_rust_hash_binsearch;
+pub mod yft40so_im_binsearch;
 pub mod yft40so_boomphf_binsearch;
 pub mod yft40so_boomphf_para_binsearch;
 pub mod yft40so_fx_hash_linsearch;
@@ -232,6 +233,7 @@ fn main() {
                         25 => testyft40!(yft40so_boomphf_binsearch::YFT; values),
                         26 => testyft40!(yft40so_boomphf_para_binsearch::YFT; values),
                         27 => testyft40!(yft40so_fx_hash_small_groups::YFT; values),
+                        28 => testyft40!(yft40so_im_binsearch::YFT; values),
                         _ => panic!("Invalid input for argument hash_map")
                     }
                 }
