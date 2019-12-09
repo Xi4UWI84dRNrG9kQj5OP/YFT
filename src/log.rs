@@ -46,6 +46,12 @@ impl<'a> Log<'a> {
         self
     }
 
+    pub fn reset_memlog(&mut self) {
+        if let Some(mem) = self.memlog.as_mut() {
+            mem.reg.reset();
+        }
+    }
+
     pub fn log_time(&mut self, info: &str) -> &mut Log<'a> {
         if let Some(time) = self.timelog.as_ref() {
             self.print_result(format!("info={}\ttimeSinceLastCall={}\ttimeSinceStart={}", info, time.last.elapsed().as_millis(), time.start.elapsed().as_millis()));

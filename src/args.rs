@@ -19,7 +19,7 @@ pub struct Args {
     /// Evaluate the predecessor search steps
     #[structopt(short = "d", long)]
     pub search_stats: bool,
-    /// Run multiple times, each time with half much elements than before
+    /// Run multiple times (up to 40), each time with half much elements than before
     #[structopt(short, long)]
     pub element_length_test: bool,
     /// If set leaf level will not be calculated.

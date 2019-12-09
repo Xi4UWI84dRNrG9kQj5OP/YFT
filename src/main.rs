@@ -124,23 +124,24 @@ fn main() {
         run_yft(&args, &mut log, values);
     } else {
         for i in 0..40 { //for element length test, else ignored
-            let iteration_values;
+           log.reset_memlog();
+            let iteration_values : (Vec<usize>, Vec<u40>);
             //decrease number of elements if option is set
             if values.0.len() == 0 {
                 iteration_values = (Vec::new(), values.1.iter().step_by(2usize.pow(i)).map(|v| v.clone()).collect());
-                if values.1.len() < 2 {
+                if iteration_values.1.len() < 2 {
                     break;
                 }
             } else {
                 iteration_values = (values.0.iter().step_by(2usize.pow(i)).map(|v| v.clone()).collect(), Vec::new());
-                if values.0.len() < 2 {
+                if iteration_values.0.len() < 2 {
                     break;
                 }
             }
-            //log is not used between begin of for loop and here -> no problems
-            log.inc_run_number();
 
             run_yft(&args, &mut log, iteration_values);
+            //log is not used between begin of for loop and here -> no problems
+            log.inc_run_number();
         }
         {} // end for
     }
@@ -182,11 +183,11 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
             let values = get_u40_values(values);
 
             if args.search_stats {
-                if args.hash_map != 21 {
+                if args.hash_map != 23 {
                     panic!("search stats can not be made with -h {} and -u option", args.hash_map);
                 }
                 if let Some(ref file) = args.queries {
-                    let yft = yft40so_fx_hash_binsearch::YFT::new(values, &args, &mut log);
+                    let yft = yft40so_fnv_binsearch::YFT::new(values, &args, &mut log);
                     let test_values: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
                     let number = test_values.len();
                     log.log_time(&format!("queries loaded\tqueries={}", number));
