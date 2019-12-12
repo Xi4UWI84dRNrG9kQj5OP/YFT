@@ -7,6 +7,7 @@ extern crate bitflags;
 extern crate uint;
 extern crate stats_alloc;
 extern crate im_rc;
+extern crate fnv;
 
 /// Main module
 /// all "cargo run" calls go through this code
@@ -19,6 +20,8 @@ use uint::u40;
 use args::Args;
 use args::ValueSrc;
 use std::collections::BTreeSet;
+use self::fnv::FnvHashSet;
+use std::iter::FromIterator;
 
 pub mod yft64;
 pub mod yft40_rust_hash;
@@ -124,8 +127,8 @@ fn main() {
         run_yft(&args, &mut log, values);
     } else {
         for i in 0..40 { //for element length test, else ignored
-           log.reset_memlog();
-            let iteration_values : (Vec<usize>, Vec<u40>);
+            log.reset_memlog();
+            let iteration_values: (Vec<usize>, Vec<u40>);
             //decrease number of elements if option is set
             if values.0.len() == 0 {
                 iteration_values = (Vec::new(), values.1.iter().step_by(2usize.pow(i)).map(|v| v.clone()).collect());
@@ -179,6 +182,18 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
             log.log_mem("initialized").log_time("initialized");
 
             query(&|q| vec_search::mixed_search_pred(&values, q, args.min_start_level), &args, &mut log);
+        } else if args.hash_map == 200 { //test hashmap hit/miss time
+            let values = get_u40_values(values);
+            let mut map: FnvHashSet<u40> = FnvHashSet::from_iter(values.iter().map(|v| v.clone()));
+//            values.iter().for_each(|v| map.insert(v.clone()));
+
+            log.log_time("initialized");
+
+            query(&|q| {map.get(&q); None}, &args, &mut log);
+
+            map.reserve(map.capacity());
+
+            query(&|q| {map.get(&q); None}, &args, &mut log);
         } else if args.u40 {
             let values = get_u40_values(values);
 
