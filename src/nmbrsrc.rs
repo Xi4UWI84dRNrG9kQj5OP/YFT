@@ -11,6 +11,7 @@ use std::fs::File;
 use self::serde::{Serialize, Deserialize};
 use self::rmps::{Serializer, Deserializer};
 use uint::u40;
+use std::io::BufReader;
 use std::io::Read;
 
 /// length = number of elements in result
@@ -93,7 +94,7 @@ pub fn save(values: &Vec<usize>, path: &str) -> std::io::Result<()> {
 
 // load usize values serialized with this module
 pub fn load(path: &str) -> std::io::Result<Vec<usize>> {
-    let input = File::open(path)?;
+    let input = BufReader::new(File::open(path).unwrap());
     let mut deserializer = Deserializer::new(input);
     let values: Vec<usize> = Deserialize::deserialize(&mut deserializer).unwrap();
     Ok(values)
@@ -101,7 +102,7 @@ pub fn load(path: &str) -> std::io::Result<Vec<usize>> {
 
 // load u64 values serialized with this module
 pub fn load_u64_serialized(path: &str) -> std::io::Result<Vec<usize>> {
-    let input = File::open(path)?;
+    let input = BufReader::new(File::open(path).unwrap());
     let mut deserializer = Deserializer::new(input);
     let values: Vec<u64> = Deserialize::deserialize(&mut deserializer).unwrap();
     dbg!(values.len());
@@ -110,7 +111,7 @@ pub fn load_u64_serialized(path: &str) -> std::io::Result<Vec<usize>> {
 
 // load u40 values serialized with this module
 pub fn load_u40_serialized(path: &str) -> std::io::Result<Vec<u40>> {
-    let input = File::open(path)?;
+    let input = BufReader::new(File::open(path).unwrap());
     let mut deserializer = Deserializer::new(input);
     let values: Vec<u40> = Deserialize::deserialize(&mut deserializer).unwrap();
     Ok(values)
@@ -118,7 +119,7 @@ pub fn load_u40_serialized(path: &str) -> std::io::Result<Vec<u40>> {
 
 // load u40 values without any separator or other information
 pub fn load_u40_fit(path: &str) -> std::io::Result<Vec<u40>> {
-    let mut input = File::open(path)?;
+    let mut input = BufReader::new(File::open(path).unwrap());
     let number_of_values = std::fs::metadata(path)?.len() as usize / 5;
     let mut values: Vec<u40> = vec![u40::from(0); number_of_values];
     let mut i = 0;
@@ -143,7 +144,7 @@ pub fn load_u40_fit(path: &str) -> std::io::Result<Vec<u40>> {
 
 /// load u40 values with length of vector at start
 pub fn load_u40_tim(path: &str) -> std::io::Result<Vec<u40>> {
-    let mut input = File::open(path)?;
+    let mut input = BufReader::new(File::open(path).unwrap());
     let mut lenv = Vec::new();
     std::io::Read::by_ref(&mut input).take(std::mem::size_of::<usize>() as u64).read_to_end(&mut lenv)?;
     let mut len: [u8; std::mem::size_of::<usize>()] = [0; std::mem::size_of::<usize>()];

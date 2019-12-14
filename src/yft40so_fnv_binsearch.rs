@@ -131,7 +131,7 @@ impl YFT {
         YFT { lss_top, lss_leaf, lss_branch, start_level, last_level_len, elements, group_size }
     }
 
-    ///prints number of elements + relative fill level per lss level
+    ///prints number of elements + relative fill level per lss level + Hashmap capacity
     pub fn print_stats(&self, log: &Log) {
         log.print_result(format!("start_level={}\tnormal_levels={}\ttop_levels={}", self.start_level, self.lss_branch.len() + 1, self.last_level_len));
         let mut len = self.lss_leaf.len();
@@ -139,7 +139,7 @@ impl YFT {
         log.print_result(format!("level=0\tnodes={}\trelative_to_input={}\trelative_to_capacity={}", len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.start_level) as f32)));
         for level in 1..self.lss_branch.len() + 1 {
             len = self.lss_branch[level - 1].len();
-            log.print_result(format!("level={}\tnodes={}\trelative_to_input={}\trelative_to_capacity={}", level, len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.start_level - level) as f32)));
+            log.print_result(format!("level={}\tnodes={}\trelative_to_input={}\trelative_to_capacity={}\tcapacity={}", level, len, len as f32 / self.elements.len() as f32, len as f32 / 2f32.powf((BIT_LENGTH - self.start_level - level) as f32), self.lss_branch[level - 1].capacity()));
             count += self.lss_branch[level - 1].len();
         }
         log.print_result(format!("level=-1\tnodes={}\telements={}", count, self.elements.len()));
@@ -337,17 +337,18 @@ impl YFT {
     /// position may not belong to existing node
     /// exit point (0 leaf, x level, 42 top, 43 begin)
     /// number of binary search steps
-    pub fn predecessor_with_stats(&self, query: DataType) -> (Option<DataType>, u32, u32) {
-        let mut count = 0;
+    pub fn predecessor_with_stats(&self, query: DataType) -> (Option<DataType>, u32, u32, u32) {
+        let mut search_steps = 0;
+        let mut hash_miss = 0;
         unsafe {
             if query < *self.elements.get_unchecked(0) {
-                return (None, 0, count);
+                return (None, 0, search_steps, hash_miss);
             }
             //binary search lowest ancestor for some query
             // query 0 == lss_leaf, query len()+1 == lss_top
             let mut search_range = (0, self.lss_branch.len() + 1);
             while search_range.0 != search_range.1 {
-                count += 1;
+                search_steps += 1;
                 let mut search_position = (search_range.0 + search_range.1) / 2;
                 if search_position == self.lss_branch.len() + 1 {
                     //top level may only be used iff there are no existing nodes below in search path
@@ -358,9 +359,10 @@ impl YFT {
                     //leaf level
                     match self.lss_leaf.get(&calc_path(query, search_position, self.start_level)) {
                         Some(first_element) => {
-                            return (self.predecessor_from_array(query, *first_element), 0, count);
+                            return (self.predecessor_from_array(query, *first_element), 0, search_steps, hash_miss);
                         }
                         None => {
+                            hash_miss += 1;
                             //there is no node -> search higher
                             search_range = (search_position + 1, search_range.1);
                         }
@@ -372,6 +374,7 @@ impl YFT {
                             search_range = (search_range.0, search_position);
                         }
                         None => {
+                            hash_miss += 1;
                             //there is no node -> search higher
                             search_range = (search_position + 1, search_range.1);
                         }
@@ -383,7 +386,7 @@ impl YFT {
 
             if search_range.0 == self.lss_branch.len() + 1 {
                 //case there is no existing node -> look @ lss_top
-                return (self.predec_lss_top(query), 42, count);
+                return (self.predec_lss_top(query), 42, search_steps, hash_miss);
             }
 
             if search_range.0 == 0 {
@@ -391,7 +394,7 @@ impl YFT {
                 match self.lss_leaf.get(&calc_path(query, search_range.0, self.start_level)) {
                     Some(first_element) => {
                         //searched note is in Tree -> return its predecessor
-                        return (self.predecessor_from_array(query, *first_element), 0, count);
+                        return (self.predecessor_from_array(query, *first_element), 0, search_steps, hash_miss);
                     }
                     None => {
                         panic!("This can't happen, cause it was checked at beginning of this method, that there is a predecessor");
@@ -403,7 +406,7 @@ impl YFT {
                         //it was checked at beginning of this method, that there is a predecessor
                         debug_assert!(*first_element != DataType::max_value());
                         //first missing node in xft would be left child -> descending shows successor
-                        return (self.predecessor_from_array(query, *first_element), search_range.0 as u32, count);
+                        return (self.predecessor_from_array(query, *first_element), search_range.0 as u32, search_steps, hash_miss);
                     }
                     None => {
                         panic!("This can't happen, cause it was checked at beginning of this method, that there is a predecessor");
