@@ -15,8 +15,7 @@ pub struct Args {
     /// Compress the YFT. Not working with u40 Option now.
     #[structopt(short, long)]
     pub compress: bool,
-    /// Use binary search instead of Y-Fast-Trie
-    /// Evaluate the predecessor search steps
+    /// Evaluate the predecessor search steps (works with h = 23, 29)
     #[structopt(short = "d", long)]
     pub search_stats: bool,
     /// Run multiple times (up to 40), each time with half much elements than before
@@ -49,11 +48,17 @@ pub struct Args {
     /// 26 = boomphf with parallel construction, leaf groups, no child pointer, binary search input level
     /// 27 = Fx, dynamic leaf groups, no child pointer, binary search input level
     /// 28 = im-rc, leaf groups, no child pointer, binary search input level
+    /// 29 = FNV with binary search that doesnt cut in the middle (use -l option)
     /// 100 = Use binary search instead of Y-Fast-Trie
     /// 101 = Use btree instead of Y-Fast-Trie
-    /// 102 = Use Mixed binary anf lineat Search instead of Y-Fast-Trie
+    /// 102 = Use Mixed binary anf linear Search instead of Y-Fast-Trie
     #[structopt(short, long, default_value = "1")]
     pub hash_map: usize,
+    //percentage of left left searched space, that should be used for next query
+    ///can only be used with h = 29
+    /// should not be higher than 50 (else may cause infinite loop)
+    #[structopt(short = "l", long, default_value = "50")]
+    pub bin_middle: usize,
     /// Log memory usage
     #[structopt(short, long)]
     pub  memory: bool,

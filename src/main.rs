@@ -30,6 +30,7 @@ pub mod yft40bn_fx_hash;
 pub mod yft40bo_fx_hash;
 pub mod yft40so_fx_hash_binsearch;
 pub mod yft40so_fnv_binsearch;
+pub mod yft40so_fnv_bin_weight;
 pub mod yft40so_rust_hash_binsearch;
 pub mod yft40so_im_binsearch;
 pub mod yft40so_boomphf_binsearch;
@@ -213,35 +214,63 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
             let values = get_u40_values(values);
 
             if args.search_stats {
-                if args.hash_map != 23 {
-                    panic!("search stats can not be made with -h {} and -u option", args.hash_map);
-                }
                 if let Some(ref file) = args.queries {
-                    let yft = yft40so_fnv_binsearch::YFT::new(values, &args, &mut log);
-                    let test_values: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
-                    let number = test_values.len();
-                    log.log_time(&format!("queries loaded\tqueries={}", number));
-                    let mut stats = vec![vec![0; 44]; 44];
-                    let mut hit_count = 0;
-                    let mut miss_count = 0;
-                    let _: Vec<u40> = test_values.into_iter().map(|v| {
-                        let (r, e, c, m) = yft.predecessor_with_stats(v);
-                        stats[e as usize][c as usize] += 1;
-                        hit_count += c -m;
-                        miss_count += m;
-                        r.unwrap_or(u40::from(0))
-                    }).collect();
-                    log.log_time(&format!("queries processed\tnumber={}", number));
-                    for e in 0..43 {
-                        for c in 0..43 {
-                            if stats[e][c] > 0 {
-                                log.print_result(format!("Exit={}\tSearchSteps={}\tfrequency={}", e, c, stats[e][c]));
+                    if args.hash_map == 23 {
+                        let yft = yft40so_fnv_binsearch::YFT::new(values, &args, &mut log);
+                        let test_values: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
+                        let number = test_values.len();
+                        log.log_time(&format!("queries loaded\tqueries={}", number));
+                        let mut stats = vec![vec![0; 44]; 44];
+                        let mut hit_count = 0;
+                        let mut miss_count = 0;
+                        let _: Vec<u40> = test_values.into_iter().map(|v| {
+                            let (r, e, c, m) = yft.predecessor_with_stats(v);
+                            stats[e as usize][c as usize] += 1;
+                            hit_count += c - m;
+                            miss_count += m;
+                            r.unwrap_or(u40::from(0))
+                        }).collect();
+                        log.log_time(&format!("queries processed\tnumber={}", number));
+                        for e in 0..43 {
+                            for c in 0..43 {
+                                if stats[e][c] > 0 {
+                                    log.print_result(format!("Exit={}\tSearchSteps={}\tfrequency={}", e, c, stats[e][c]));
+                                }
                             }
                         }
-                    }
-                    log.print_result(format!("Hits={}\tMisses={}\tTotal={}", hit_count, miss_count, hit_count + miss_count));
-                    if args.memory {
-                        yft.print_stats(&log);
+                        log.print_result(format!("Hits={}\tMisses={}\tTotal={}", hit_count, miss_count, hit_count + miss_count));
+                        if args.memory {
+                            yft.print_stats(&log);
+                        }
+                    } else if args.hash_map == 29 {
+                        let yft = yft40so_fnv_bin_weight::YFT::new(values, &args, &mut log);
+                        let test_values: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
+                        let number = test_values.len();
+                        log.log_time(&format!("queries loaded\tqueries={}", number));
+                        let mut stats = vec![vec![0; 44]; 44];
+                        let mut hit_count = 0;
+                        let mut miss_count = 0;
+                        let _: Vec<u40> = test_values.into_iter().map(|v| {
+                            let (r, e, c, m) = yft.predecessor_with_stats(v);
+                            stats[e as usize][c as usize] += 1;
+                            hit_count += c - m;
+                            miss_count += m;
+                            r.unwrap_or(u40::from(0))
+                        }).collect();
+                        log.log_time(&format!("queries processed\tnumber={}", number));
+                        for e in 0..43 {
+                            for c in 0..43 {
+                                if stats[e][c] > 0 {
+                                    log.print_result(format!("Exit={}\tSearchSteps={}\tfrequency={}", e, c, stats[e][c]));
+                                }
+                            }
+                        }
+                        log.print_result(format!("Hits={}\tMisses={}\tTotal={}", hit_count, miss_count, hit_count + miss_count));
+                        if args.memory {
+                            yft.print_stats(&log);
+                        }
+                    } else{
+                        panic!("search stats can not be made with -h {}, use 23 or 29", args.hash_map);
                     }
                 } else {
                     panic!("search stats requires query file (-q)");
@@ -284,6 +313,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                     26 => testyft40!(yft40so_boomphf_para_binsearch::YFT; values),
                     27 => testyft40!(yft40so_fx_hash_small_groups::YFT; values),
                     28 => testyft40!(yft40so_im_binsearch::YFT; values),
+                    29 => testyft40!(yft40so_fnv_bin_weight::YFT; values),
                     _ => panic!("Invalid input for argument hash_map")
                 }
             }
