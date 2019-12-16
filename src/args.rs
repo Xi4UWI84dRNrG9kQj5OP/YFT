@@ -39,6 +39,7 @@ pub struct Args {
     /// 8 = Fx no level
     /// 9 = FNV, No fixed leaf groups, no child pointer
     /// 10 = Fx, No fixed leaf groups, child pointer
+    /// 11 = FNV, No fixed leaf groups, no child pointer
     /// 20 = Fx, leaf groups, child pointer
     /// 21 = Fx, leaf groups, no child pointer, binary search input level
     /// 22 = Fx, leaf groups, no child pointer, linear search input level
@@ -49,6 +50,7 @@ pub struct Args {
     /// 27 = Fx, dynamic leaf groups, no child pointer, binary search input level
     /// 28 = im-rc, leaf groups, no child pointer, binary search input level
     /// 29 = FNV with binary search that doesnt cut in the middle (use -l option)
+    /// 30 = FNV, dynamic leaf groups, no child pointer, binary search input level
     /// 100 = Use binary search instead of Y-Fast-Trie
     /// 101 = Use btree instead of Y-Fast-Trie
     /// 102 = Use Mixed binary anf linear Search instead of Y-Fast-Trie

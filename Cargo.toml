@@ -21,4 +21,4 @@ fnv = "1.0.3"
 
 [profile.release]
 #enable only when using valgrind
-debug = true
+debug = false

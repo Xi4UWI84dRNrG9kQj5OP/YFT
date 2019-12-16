@@ -46,7 +46,8 @@ pub mod yft40_fx_hash_capacity;
 pub mod yft40_no_level;
 pub mod yft40_no_level_bin;
 pub mod yft40_fnv_hash;
-//pub mod yft40_fx_hash_comp;
+pub mod yft40so_fnv_small_groups;
+pub mod yft40sn_fnv;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
@@ -304,6 +305,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                     8 => testyft40!(yft40_no_level::YFT; values),
                     9 => testyft40!(yft40_fnv_hash::YFT; values),
                     10 => testyft40!(yft40bn_fx_hash::YFT; values),
+                    11 => testyft40!(yft40sn_fnv::YFT; values),
                     20 => testyft40!(yft40bo_fx_hash::YFT; values),
                     21 => testyft40!(yft40so_fx_hash_binsearch::YFT; values),
                     22 => testyft40!(yft40so_fx_hash_linsearch::YFT; values),
@@ -314,6 +316,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                     27 => testyft40!(yft40so_fx_hash_small_groups::YFT; values),
                     28 => testyft40!(yft40so_im_binsearch::YFT; values),
                     29 => testyft40!(yft40so_fnv_bin_weight::YFT; values),
+                    30 => testyft40!(yft40so_fnv_small_groups::YFT; values),
                     _ => panic!("Invalid input for argument hash_map")
                 }
             }

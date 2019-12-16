@@ -24,6 +24,9 @@ pub mod yft40so_rust_hash_binsearch;
 pub mod yft40so_boomphf_binsearch;
 pub mod yft40so_fx_hash_linsearch;
 pub mod yft40so_fx_hash_small_groups;
+pub mod yft40so_fnv_bin_weight;
+pub mod yft40so_fnv_small_groups;
+pub mod yft40sn_fnv;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
@@ -47,6 +50,7 @@ mod tests {
             fixed_leaf_level: Some(8),
             fixed_top_level: Some(32),
             hash_map: 1,
+            bin_middle: 30,
             memory: false,
             run_name: None,
             queries: None,
@@ -247,6 +251,42 @@ mod tests {
             let yft1 = yft40so_fx_hash_small_groups::YFT::new(values1.clone(), &args, &mut log);
             let yft2 = yft40so_fx_hash_small_groups::YFT::new(values2.clone(), &args, &mut log);
             let yftr = yft40so_fx_hash_small_groups::YFT::new(rnd_values.clone(), &args, &mut log);
+
+            for (pos, query) in queries.iter().enumerate() {
+                assert_eq!(yft1.predecessor(*query), results_1[pos]);
+                assert_eq!(yft2.predecessor(*query), results_2[pos]);
+                assert_eq!(yftr.predecessor(*query), results_r[pos]);
+            }
+        }
+
+        {
+            let yft1 = yft40so_fnv_bin_weight::YFT::new(values1.clone(), &args, &mut log);
+            let yft2 = yft40so_fnv_bin_weight::YFT::new(values2.clone(), &args, &mut log);
+            let yftr = yft40so_fnv_bin_weight::YFT::new(rnd_values.clone(), &args, &mut log);
+
+            for (pos, query) in queries.iter().enumerate() {
+                assert_eq!(yft1.predecessor(*query), results_1[pos]);
+                assert_eq!(yft2.predecessor(*query), results_2[pos]);
+                assert_eq!(yftr.predecessor(*query), results_r[pos]);
+            }
+        }
+
+        {
+            let yft1 = yft40so_fnv_small_groups::YFT::new(values1.clone(), &args, &mut log);
+            let yft2 = yft40so_fnv_small_groups::YFT::new(values2.clone(), &args, &mut log);
+            let yftr = yft40so_fnv_small_groups::YFT::new(rnd_values.clone(), &args, &mut log);
+
+            for (pos, query) in queries.iter().enumerate() {
+                assert_eq!(yft1.predecessor(*query), results_1[pos]);
+                assert_eq!(yft2.predecessor(*query), results_2[pos]);
+                assert_eq!(yftr.predecessor(*query), results_r[pos]);
+            }
+        }
+
+        {
+            let yft1 = yft40sn_fnv::YFT::new(values1.clone(), &args, &mut log);
+            let yft2 = yft40sn_fnv::YFT::new(values2.clone(), &args, &mut log);
+            let yftr = yft40sn_fnv::YFT::new(rnd_values.clone(), &args, &mut log);
 
             for (pos, query) in queries.iter().enumerate() {
                 assert_eq!(yft1.predecessor(*query), results_1[pos]);
