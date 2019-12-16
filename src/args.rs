@@ -55,7 +55,7 @@ pub struct Args {
     /// 101 = Use btree instead of Y-Fast-Trie
     /// 102 = Use Mixed binary anf linear Search instead of Y-Fast-Trie
     #[structopt(short, long, default_value = "1")]
-    pub hash_map: usize,
+    pub implementation: usize,
     //percentage of left left searched space, that should be used for next query
     ///can only be used with h = 29
     /// should not be higher than 50 (else may cause infinite loop)

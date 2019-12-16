@@ -49,7 +49,7 @@ mod tests {
             element_length_test: false,
             fixed_leaf_level: Some(8),
             fixed_top_level: Some(32),
-            hash_map: 1,
+            implementation: 1,
             bin_middle: 30,
             memory: false,
             run_name: None,

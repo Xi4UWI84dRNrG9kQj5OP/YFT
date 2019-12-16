@@ -156,7 +156,7 @@ fn main() {
 fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) {
     log.log_mem("values loaded").log_time("values loaded");
     {
-        if args.hash_map == 100 { //binary search
+        if args.implementation == 100 { //binary search
             let values = get_u40_values(values);
 
             //print stats
@@ -164,7 +164,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
             log.log_mem("initialized").log_time("initialized");
 
             query(&|q| vec_search::rust_bin_search_pred(&values, q), &args, &mut log);
-        } else if args.hash_map == 101 { //btree
+        } else if args.implementation == 101 { //btree
             // performance is so bad, that possible improvement with u40 won't help
             let values = get_usize_values(values);
             let set = &(&values).into_iter().fold(BTreeSet::new(), |mut set, value| {
@@ -176,7 +176,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
             log.log_mem("initialized").log_time("initialized");
 
             query(&|q| vec_search::btree_search_pred(set, q), &args, &mut log);
-        } else if args.hash_map == 102 { //mixed binary linear search
+        } else if args.implementation == 102 { //mixed binary linear search
             let values = get_u40_values(values);
 
             //print stats
@@ -184,7 +184,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
             log.log_mem("initialized").log_time("initialized");
 
             query(&|q| vec_search::mixed_search_pred(&values, q, args.min_start_level), &args, &mut log);
-        } else if args.hash_map == 200 { //test hashmap hit/miss time
+        } else if args.implementation == 200 { //test hashmap hit/miss time
             let values = get_u40_values(values);
             let mut map: FnvHashSet<u40> = FnvHashSet::from_iter(values.iter().map(|v| v.clone()));
 //            values.iter().for_each(|v| map.insert(v.clone()));
@@ -216,7 +216,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
 
             if args.search_stats {
                 if let Some(ref file) = args.queries {
-                    if args.hash_map == 23 {
+                    if args.implementation == 23 {
                         let yft = yft40so_fnv_binsearch::YFT::new(values, &args, &mut log);
                         let test_values: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
                         let number = test_values.len();
@@ -243,7 +243,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                         if args.memory {
                             yft.print_stats(&log);
                         }
-                    } else if args.hash_map == 29 {
+                    } else if args.implementation == 29 {
                         let yft = yft40so_fnv_bin_weight::YFT::new(values, &args, &mut log);
                         let test_values: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
                         let number = test_values.len();
@@ -271,7 +271,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                             yft.print_stats(&log);
                         }
                     } else{
-                        panic!("search stats can not be made with -h {}, use 23 or 29", args.hash_map);
+                        panic!("search stats can not be made with -h {}, use 23 or 29", args.implementation);
                     }
                 } else {
                     panic!("search stats requires query file (-q)");
@@ -293,7 +293,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                     };
                 }
 
-                match args.hash_map {
+                match args.implementation {
                     0 => testyft40!(yft40_rust_hash::YFT; values),
                     1 => testyft40!(yft40sn_fx_hash::YFT; values),
                     2 => testyft40!(yft40_hash_brown::YFT; values),
@@ -321,7 +321,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                 }
             }
         } else {
-            if args.hash_map != 1 {
+            if args.implementation != 1 {
                 eprintln!("Hashmap Parameter is ignored in usize mod\n Use -u Parameter!");
             }
             let yft = YFT::new(get_usize_values(values), &args, &mut log);
