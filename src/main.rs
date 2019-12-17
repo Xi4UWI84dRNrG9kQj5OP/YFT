@@ -48,6 +48,7 @@ pub mod yft40_no_level_bin;
 pub mod yft40_fnv_hash;
 pub mod yft40so_fnv_small_groups;
 pub mod yft40sn_fnv;
+pub mod yft40sn_bin_fnv;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
@@ -270,7 +271,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                         if args.memory {
                             yft.print_stats(&log);
                         }
-                    } else{
+                    } else {
                         panic!("search stats can not be made with -h {}, use 23 or 29", args.implementation);
                     }
                 } else {
@@ -305,7 +306,8 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                     8 => testyft40!(yft40_no_level::YFT; values),
                     9 => testyft40!(yft40_fnv_hash::YFT; values),
                     10 => testyft40!(yft40bn_fx_hash::YFT; values),
-                    11 => testyft40!(yft40sn_fnv::YFT; values),
+                    11 => testyft40!(yft40sn_bin_fnv::YFT; values),
+                    12 => testyft40!(yft40sn_fnv::YFT; values),
                     20 => testyft40!(yft40bo_fx_hash::YFT; values),
                     21 => testyft40!(yft40so_fx_hash_binsearch::YFT; values),
                     22 => testyft40!(yft40so_fx_hash_linsearch::YFT; values),
