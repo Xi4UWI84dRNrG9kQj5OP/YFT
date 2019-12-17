@@ -32,14 +32,14 @@ impl YFT {
         }
         let last_level_len = if let Some(top_level) = args.fixed_top_level {
             BIT_LENGTH - top_level
-        }  else {
+        } else {
             BIT_LENGTH - YFT::calc_lss_top_level(&elements, args.min_start_level, BIT_LENGTH - args.max_lss_level, args.max_last_level_load_factor, args.min_load_factor_difference)
         };
         log.log_time("number of top levels calculated");
 
         //initialise lss_top
         let mut lss_top = vec![DataType::max_value(); 2usize.pow(last_level_len as u32)];
-        for (pos, value) in elements.iter().enumerate().rev() {
+        for (pos, value) in elements.iter().enumerate() {
             //check array is sorted
             debug_assert!(pos == 0 || value >= &elements[pos - 1]);
             let mut lss_top_pos = YFT::lss_top_position(value, last_level_len) as usize;
@@ -69,7 +69,7 @@ impl YFT {
         let mut range = (start_level + 1, max_lss_level);
         //load factor can only increase if level gets higher. If it doesn't, levels can be cut.
         let top_load_factor = YFT::calc_nodes_in_level(max_lss_level, elements) / 2f64.powf((BIT_LENGTH - max_lss_level) as f64) * (min_load_factor_difference as f64) / 100.;
-         let max = if top_load_factor < (max_load_factor as f64) / 100. {
+        let max = if top_load_factor < (max_load_factor as f64) / 100. {
             top_load_factor
         } else {
             (max_load_factor as f64) / 100.
@@ -112,20 +112,24 @@ impl YFT {
     pub fn predecessor(&self, query: DataType) -> Option<DataType> {
         unsafe {
             let position = YFT::lss_top_position(&query, self.last_level_len);
-           let left = if position == 0 {
+            let left = if position == 0 {
                 0
             } else {
-               let mut left = usize::from(*self.lss_top.get_unchecked(position)) - 1;
-               if left == usize::from(DataType::max_value()) {
-                   left = self.elements.len() - 1;
-                   if *self.elements.get_unchecked(left) < query {
-                       return self.element_from_array(query, left);
-                   } else {
-                       //if last element is > query there is none
-                       return None;
-                   }
-               }
-               left
+                let mut left = usize::from(*self.lss_top.get_unchecked(position - 1));
+                if left == usize::from(DataType::max_value()) {
+                    left = self.elements.len() - 1;
+                    if *self.elements.get_unchecked(left) < query {
+                        return self.element_from_array(query, left);
+                    } else {
+                        //if last element is > query there is none
+                        return None;
+                    }
+                } else {
+                    if left > 0 {
+                        left -= 1;
+                    }
+                }
+                left
             };
             let mut right = usize::from(*self.lss_top.get_unchecked(position));
             if right == usize::from(DataType::max_value()) && *self.elements.get_unchecked(0) < query {
@@ -135,7 +139,7 @@ impl YFT {
                 }
             }
             debug_assert!(right == 0 || self.elements[right] >= query);
-            let pos = match self.elements.get(left..right).unwrap().binary_search(&query) {
+            let pos = match self.elements.get_unchecked(left..right).binary_search(&query) {
                 Ok(pos) => pos + left,
                 Err(pos) => pos + left
             };
@@ -144,7 +148,12 @@ impl YFT {
                 //test next query greater than search one
                 debug_assert!(usize::from(pos) >= self.elements.len() || if let Some(successor) = self.elements.get(usize::from(pos)) { successor >= &query } else { true });
                 //test query smaller than searched one
-                debug_assert!(if let Some(predecessor) = self.elements.get(usize::from(pos - 1)) { predecessor < &query } else { true });
+                debug_assert!(if let Some(predecessor) = self.elements.get(usize::from(pos - 1)) {
+                    if predecessor < &query { true } else {
+                        dbg!(left,right,query,pos, self.elements.len(), predecessor, self.elements[0]);
+                        false
+                    }
+                } else { true });
                 debug_assert!(usize::from(pos - 1) < self.elements.len());
                 Some(*self.elements.get_unchecked(pos - 1))
             } else {

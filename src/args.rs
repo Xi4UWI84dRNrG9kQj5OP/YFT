@@ -41,6 +41,7 @@ pub struct Args {
     /// 10 = Fx hash map, No fixed leaf groups, child pointer
     /// 11 = FNV hash map, No fixed leaf groups, no child pointer, linear search
     /// 12 = FNV hash map, No fixed leaf groups, no child pointer, linear search
+    /// 13 = no xft level, binary search
     /// 20 = Fx hash map, leaf groups, child pointer
     /// 21 = Fx hash map, leaf groups, no child pointer, binary search input level
     /// 22 = Fx hash map, leaf groups, no child pointer, linear search input level
@@ -55,7 +56,7 @@ pub struct Args {
     /// 100 = Use binary search instead of Y-Fast-Trie
     /// 101 = Use btree instead of Y-Fast-Trie
     /// 102 = Use Mixed binary anf linear Search instead of Y-Fast-Trie
-    #[structopt(short, long, default_value = "1")]
+    #[structopt(short="h", long, default_value = "1")]
     pub implementation: usize,
     //percentage of left left searched space, that should be used for next query
     ///can only be used with h = 29

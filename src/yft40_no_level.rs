@@ -39,7 +39,7 @@ impl YFT {
 
         //initialise lss_top
         let mut lss_top = vec![DataType::max_value(); 2usize.pow(last_level_len as u32)];
-        for (pos, value) in elements.iter().enumerate().rev() {
+        for (pos, value) in elements.iter().enumerate(){
             //check array is sorted
             debug_assert!(pos == 0 || value >= &elements[pos - 1]);
             let mut lss_top_pos = YFT::lss_top_position(value, last_level_len) as usize;

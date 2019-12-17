@@ -308,6 +308,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                     10 => testyft40!(yft40bn_fx_hash::YFT; values),
                     11 => testyft40!(yft40sn_bin_fnv::YFT; values),
                     12 => testyft40!(yft40sn_fnv::YFT; values),
+                    13 => testyft40!(yft40_no_level_bin::YFT; values),
                     20 => testyft40!(yft40bo_fx_hash::YFT; values),
                     21 => testyft40!(yft40so_fx_hash_binsearch::YFT; values),
                     22 => testyft40!(yft40so_fx_hash_linsearch::YFT; values),
