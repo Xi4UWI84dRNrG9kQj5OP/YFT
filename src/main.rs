@@ -43,7 +43,8 @@ pub mod yft40_boomphf_hash;
 pub mod yft40_boomphf_hash_para;
 pub mod yft40_fx_hash_bottom_up_construction;
 pub mod yft40_fx_hash_capacity;
-pub mod yft40_no_level;
+pub mod yft40_no_level_suc;
+pub mod yft40_no_level_bin_suc;
 pub mod yft40_no_level_bin;
 pub mod yft40_fnv_hash;
 pub mod yft40so_fnv_small_groups;
@@ -303,12 +304,13 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                     5 => testyft40!(yft40_boomphf_hash_para::YFT; values),
                     6 => testyft40!(yft40_fx_hash_bottom_up_construction::YFT; values),
                     7 => testyft40!(yft40_fx_hash_capacity::YFT; values),
-                    8 => testyft40!(yft40_no_level::YFT; values),
+                    8 => testyft40!(yft40_no_level_suc::YFT; values),
                     9 => testyft40!(yft40_fnv_hash::YFT; values),
                     10 => testyft40!(yft40bn_fx_hash::YFT; values),
-                    11 => testyft40!(yft40sn_bin_fnv::YFT; values),
-                    12 => testyft40!(yft40sn_fnv::YFT; values),
-                    13 => testyft40!(yft40_no_level_bin::YFT; values),
+                    11 => testyft40!(yft40sn_fnv::YFT; values),
+                    12 => testyft40!(yft40sn_bin_fnv::YFT; values),
+                    13 => testyft40!(yft40_no_level_bin_suc::YFT; values),
+                    14 => testyft40!(yft40_no_level_bin::YFT; values),
                     20 => testyft40!(yft40bo_fx_hash::YFT; values),
                     21 => testyft40!(yft40so_fx_hash_binsearch::YFT; values),
                     22 => testyft40!(yft40so_fx_hash_linsearch::YFT; values),

@@ -10,8 +10,14 @@ pub fn rust_bin_search_pred(element_list: &Vec<u40>, query: u40) -> Option<u40> 
         Err(pos) => pos
     };
     if pos > 0 {
+        //test next value greater than search one
+        debug_assert!(pos >= element_list.len() || if let Some(successor) = element_list.get(pos) { successor >= &query } else { true });
+        //test value smaller than searched one
+        debug_assert!(if let Some(predecessor) = element_list.get(pos - 1) { predecessor < &query } else { true });
+        debug_assert!(pos - 1 < element_list.len());
         Some(element_list[pos - 1])
     } else {
+        debug_assert!(element_list[0] >= query);
         None
     }
 }
@@ -20,7 +26,7 @@ pub fn rust_bin_search_pred(element_list: &Vec<u40>, query: u40) -> Option<u40> 
 pub fn linear_search_pred(element_list: &Vec<u40>, query: u40) -> Option<u40> {
     let mut pos = 0;
     unsafe {
-        while  pos < element_list.len() && element_list.get_unchecked(pos) < &query {
+        while pos < element_list.len() && element_list.get_unchecked(pos) < &query {
             pos += 1;
         }
     }

@@ -36,12 +36,13 @@ pub struct Args {
     /// 5 = boomphf  hash map parallel construction
     /// 6 = Fx hash map bottom up construction
     /// 7 = Fx hash map capacity construction
-    /// 8 = no xft level
+    /// 8 = no xft, successor list
     /// 9 = FNV hash map, No fixed leaf groups, no child pointer
     /// 10 = Fx hash map, No fixed leaf groups, child pointer
     /// 11 = FNV hash map, No fixed leaf groups, no child pointer, linear search
-    /// 12 = FNV hash map, No fixed leaf groups, no child pointer, linear search
-    /// 13 = no xft level, binary search
+    /// 12 = FNV hash map, No fixed leaf groups, no child pointer, binary search
+    /// 13 = no xft, successor list, binary search
+    /// 14 = no xft, binary search
     /// 20 = Fx hash map, leaf groups, child pointer
     /// 21 = Fx hash map, leaf groups, no child pointer, binary search input level
     /// 22 = Fx hash map, leaf groups, no child pointer, linear search input level
