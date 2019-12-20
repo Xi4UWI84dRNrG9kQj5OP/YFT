@@ -299,8 +299,35 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                         if args.memory {
                             yft.print_stats(&log);
                         }
-                    } else {
-                        panic!("search stats can not be made with -h {}, use 12, 23 or 29", args.implementation);
+                    }  else if args.implementation == 30 {
+                        let yft = yft40so_fnv_small_groups::YFT::new(values, &args, &mut log);
+                        let test_values: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
+                        let number = test_values.len();
+                        log.log_time(&format!("queries loaded\tqueries={}", number));
+                        let mut stats = vec![vec![0; 44]; 44];
+                        let mut hit_count = 0;
+                        let mut miss_count = 0;
+                        let _: Vec<u40> = test_values.into_iter().map(|v| {
+                            let (r, e, c, m) = yft.predecessor_with_stats(v);
+                            stats[e as usize][c as usize] += 1;
+                            hit_count += c - m;
+                            miss_count += m;
+                            r.unwrap_or(u40::from(0))
+                        }).collect();
+                        log.log_time(&format!("queries processed\tnumber={}", number));
+                        for e in 0..43 {
+                            for c in 0..43 {
+                                if stats[e][c] > 0 {
+                                    log.print_result(format!("Exit={}\tSearchSteps={}\tfrequency={}", e, c, stats[e][c]));
+                                }
+                            }
+                        }
+                        log.print_result(format!("Hits={}\tMisses={}\tTotal={}", hit_count, miss_count, hit_count + miss_count));
+                        if args.memory {
+                            yft.print_stats(&log);
+                        }
+                    }else {
+                        panic!("search stats can not be made with -h {}, use 12, 23, 29 or 30", args.implementation);
                     }
                 } else {
                     panic!("search stats requires query file (-q)");

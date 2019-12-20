@@ -337,6 +337,7 @@ impl YFT {
     /// position may not belong to existing node
     /// exit point (0 leaf, x level, 42 top, 43 begin)
     /// number of binary search steps
+    /// number of hash table misses
     pub fn predecessor_with_stats(&self, query: DataType) -> (Option<DataType>, u32, u32, u32) {
         let mut search_steps = 0;
         let mut hash_miss = 0;
