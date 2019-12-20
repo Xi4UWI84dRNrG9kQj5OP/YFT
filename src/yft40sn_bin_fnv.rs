@@ -335,6 +335,89 @@ impl YFT {
         };
         return if pos == 0 { None } else { self.element_from_array(query, pos - 1) };
     }
+
+
+    /// position may not belong to existing node
+    /// exit point (0 leaf, x level, 42 top, 43 begin)
+    /// number of binary search steps
+    pub fn predecessor_with_stats(&self, query: DataType) -> (Option<DataType>, u32, u32, u32) {
+        let mut search_steps = 0;
+        let mut hash_miss = 0;
+        unsafe {
+            if query < *self.elements.get_unchecked(0) {
+                return (None, 0, search_steps, hash_miss);
+            }
+            //binary search lowest ancestor for some query
+            // query 0 == lss_leaf, query len()+1 == lss_top
+            let mut search_range = (0, self.lss_branch.len() + 1);
+            while search_range.0 != search_range.1 {
+                search_steps += 1;
+                let mut search_position = (search_range.0 + search_range.1) / 2;
+                if search_position == self.lss_branch.len() + 1 {
+                    //top level may only be used iff there are no existing nodes below in search path
+                    search_position -= 1;
+                }
+
+                if search_position == 0 {
+                    //leaf level
+                    match self.lss_leaf.get(&calc_path(query, search_position, self.start_level)) {
+                        Some(first_element) => {
+                            return (self.predecessor_from_array(query, *first_element), 0, search_steps, hash_miss);
+                        }
+                        None => {
+                            hash_miss += 1;
+                            //there is no node -> search higher
+                            search_range = (search_position + 1, search_range.1);
+                        }
+                    }
+                } else {
+                    match self.lss_branch[search_position - 1].get(&calc_path(query, search_position, self.start_level)) {
+                        Some(_branch) => {
+                            //there is a branch =>  search lower
+                            search_range = (search_range.0, search_position);
+                        }
+                        None => {
+                            hash_miss += 1;
+                            //there is no node -> search higher
+                            search_range = (search_position + 1, search_range.1);
+                        }
+                    }
+                }
+            }
+
+            //search range includes now exact the lowest existing node, if there's one
+
+            if search_range.0 == self.lss_branch.len() + 1 {
+                //case there is no existing node -> look @ lss_top
+                return (self.predec_lss_top(query), 42, search_steps, hash_miss);
+            }
+
+            if search_range.0 == 0 {
+                //leaf level
+                match self.lss_leaf.get(&calc_path(query, search_range.0, self.start_level)) {
+                    Some(first_element) => {
+                        //searched note is in Tree -> return its predecessor
+                        return (self.predecessor_from_array(query, *first_element), 0, search_steps, hash_miss);
+                    }
+                    None => {
+                        panic!("This can't happen, cause it was checked at beginning of this method, that there is a predecessor");
+                    }
+                }
+            } else {
+                match self.lss_branch[search_range.0 - 1].get(&calc_path(query, search_range.0, self.start_level)) {
+                    Some(predecessor) => {
+                        //it was checked at beginning, that there is a predecessor
+                        debug_assert!(*predecessor != DataType::max_value());
+                        return (Some(*predecessor), search_range.0 as u32, search_steps, hash_miss);
+                    }
+                    None => {
+                        panic!("This can't happen, cause it was checked at beginning of this method, that there is a predecessor");
+                    }
+                }
+            }
+        }
+    }
+
 } //impl YFT
 
 fn calc_path(position: DataType, lss_level: usize, start_level: usize) -> DataType {

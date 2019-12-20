@@ -183,7 +183,7 @@ impl YFT {
         range.1 as usize
     }
 
-    ///count how many nodes are in one level
+    ///count how many nodes are in one level //TODO nicht gültig für original -> raus da
     fn calc_nodes_in_level(level: usize, elements: &Vec<DataType>) -> f64 {
         let mut last_val = calc_path(elements[0], level, 0);
         let mut count = 1.;
