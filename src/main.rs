@@ -50,7 +50,8 @@ pub mod yft40_fnv_hash;
 pub mod yft40so_fnv_small_groups;
 pub mod yft40sn_fnv;
 pub mod yft40sn_bin_fnv;
-pub mod yft40_goup;
+pub mod yft40_split;
+pub mod yft40_split_small;
 pub mod yft64so_fnv_bin_weight;
 pub mod predecessor_set;
 pub mod nmbrsrc;
@@ -60,8 +61,12 @@ pub mod vec_search;
 
 fn main() {
     let args = Args::from_args();
-    if args.fixed_leaf_level > args.fixed_top_level {
-        panic!("Leaf level has to be lower then top level");
+    if let Some(f) = args.fixed_leaf_level {
+        if let Some(g) = args.fixed_top_level {
+            if f > g {
+                panic!("Leaf level has to be lower then top level");
+            }
+        }
     }
     println!("{:?}", args);
 
@@ -374,7 +379,8 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                     12 => testyft40!(yft40sn_bin_fnv::YFT; values),
                     13 => testyft40!(yft40_no_level_bin_suc::YFT; values),
                     14 => testyft40!(yft40_no_level_bin::YFT; values),
-                    15 => testyft40!(yft40_goup::YFT; values),
+                    15 => testyft40!(yft40_split::YFT; values),
+                    16 => testyft40!(yft40_split_small::YFT; values),
                     20 => testyft40!(yft40bo_fx_hash::YFT; values),
                     21 => testyft40!(yft40so_fx_hash_binsearch::YFT; values),
                     22 => testyft40!(yft40so_fx_hash_linsearch::YFT; values),

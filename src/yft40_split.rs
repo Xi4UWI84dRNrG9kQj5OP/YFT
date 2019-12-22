@@ -97,9 +97,7 @@ impl YFT {
             let x_leaf_position = calc_path(*value, 0, start_level);
             if Some(x_leaf_position) != predecessor_x_leaf {
                 //create new leaf node and insert it in level 0
-                let mut elements = Vec::new();
-                elements.push(*value);
-                lss_leaf.insert(x_leaf_position, (predecessor, elements));
+                lss_leaf.insert(x_leaf_position, (predecessor, vec![*value]));
                 //ensure predecessors array doesnt take to much space
                 if let Some(predecessor_x_leaf) = predecessor_x_leaf {
                     lss_leaf.get_mut(&predecessor_x_leaf).unwrap().1.shrink_to_fit();

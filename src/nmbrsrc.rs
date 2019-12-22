@@ -11,7 +11,7 @@ use std::fs::File;
 use self::serde::{Serialize, Deserialize};
 use self::rmps::{Serializer, Deserializer};
 use uint::u40;
-use std::io::BufReader;
+use std::io::{BufReader, BufWriter};
 use std::io::Read;
 
 /// length = number of elements in result
@@ -84,7 +84,7 @@ pub fn save(values: &Vec<usize>, path: &str) -> std::io::Result<()> {
     if let Ok(mut old_values) = load(path) {
         old_values.append(&mut values.clone());
         old_values.sort(); //TODO theoretisch könnte man hier zeit sparen, wenn man ausnutzt, dass beide vektoren sortiert sind
-        let mut output = File::create(path)?;
+        let mut output = BufWriter::new(File::create(path)?);
         Ok(old_values.serialize(&mut Serializer::new(&mut output)).unwrap())
     } else {
         let mut output = File::create(path)?;

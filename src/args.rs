@@ -43,7 +43,8 @@ pub struct Args {
     /// 12 = FNV hash map, No fixed leaf groups, no child pointer, binary search
     /// 13 = no xft, successor list, binary search
     /// 14 = no xft, binary search
-    /// 15 = element array split
+    /// 15 = element array split into smaller arrays
+    /// 16 = element array split into smaller 16bit value arrays
     /// 20 = Fx hash map, leaf groups, child pointer
     /// 21 = Fx hash map, leaf groups, no child pointer, binary search input level
     /// 22 = Fx hash map, leaf groups, no child pointer, linear search input level

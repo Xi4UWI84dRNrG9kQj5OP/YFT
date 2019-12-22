@@ -22,7 +22,7 @@ pub mod yft40so_fnv_small_groups;
 pub mod yft40sn_fnv;
 pub mod yft40sn_bin_fnv;
 pub mod yft40_no_level_bin;
-pub mod yft40_goup;
+pub mod yft40_split_small;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
@@ -232,9 +232,9 @@ mod tests {
         }
 
         {
-            let yft1 = yft40_goup::YFT::new(values1.clone(), &args, &mut log);
-            let yft2 = yft40_goup::YFT::new(values2.clone(), &args, &mut log);
-            let yftr = yft40_goup::YFT::new(rnd_values.clone(), &args, &mut log);
+            let yft1 = yft40_split_small::YFT::new(values1.clone(), &args, &mut log);
+            let yft2 = yft40_split_small::YFT::new(values2.clone(), &args, &mut log);
+            let yftr = yft40_split_small::YFT::new(rnd_values.clone(), &args, &mut log);
 
             for (pos, query) in queries.iter().enumerate() {
                 assert_eq!(yft1.predecessor(*query), results_1[pos]);
