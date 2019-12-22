@@ -52,7 +52,7 @@ mod tests {
             result: false,
             store: None,
             time: false,
-            u40: false,
+            u40: true,
             min_load_factor_difference: 99,
             min_start_level_load_factor: 1,
             max_last_level_load_factor: 99,

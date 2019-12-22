@@ -50,6 +50,7 @@ pub mod yft40_fnv_hash;
 pub mod yft40so_fnv_small_groups;
 pub mod yft40sn_fnv;
 pub mod yft40sn_bin_fnv;
+pub mod yft64so_fnv_bin_weight;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
@@ -58,6 +59,9 @@ pub mod vec_search;
 
 fn main() {
     let args = Args::from_args();
+    if args.fixed_leaf_level > args.fixed_top_level {
+        panic!("Leaf level has to be lower then top level");
+    }
     println!("{:?}", args);
 
     let mut log =
@@ -86,7 +90,11 @@ fn main() {
                 (nmbrsrc::get_normal_dist(*length, *mean as f64, *deviation as f64), Vec::new())
             }
             ValueSrc::Uniform { length } => {
-                (nmbrsrc::get_uniform_dist(*length), Vec::new())
+                if args.u40 {
+                    (Vec::new(), nmbrsrc::get_uniform_dist(*length).into_iter().map(|v| u40::from(v)).collect())
+                } else {
+                    (nmbrsrc::get_uniform_dist_restricted(*length, 0, 18446744073709551615), Vec::new())
+                }
             }
             ValueSrc::UniformRestricted { length, path } => {
                 let values = nmbrsrc::load_u40_tim(path.to_str().unwrap()).unwrap();
@@ -299,7 +307,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                         if args.memory {
                             yft.print_stats(&log);
                         }
-                    }  else if args.implementation == 30 {
+                    } else if args.implementation == 30 {
                         let yft = yft40so_fnv_small_groups::YFT::new(values, &args, &mut log);
                         let test_values: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
                         let number = test_values.len();
@@ -326,7 +334,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                         if args.memory {
                             yft.print_stats(&log);
                         }
-                    }else {
+                    } else {
                         panic!("search stats can not be made with -h {}, use 12, 23, 29 or 30", args.implementation);
                     }
                 } else {
@@ -383,7 +391,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
             if args.implementation != 1 {
                 eprintln!("Hashmap Parameter is ignored in usize mod\n Use -u Parameter!");
             }
-            let yft = YFT::new(get_usize_values(values), &args, &mut log);
+            let yft = yft64so_fnv_bin_weight::YFT::new(get_usize_values(values), &args, &mut log);
 
             log.log_mem("initialized").log_time("initialized");
 
@@ -392,12 +400,18 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                 if args.search_stats {
                     let test_values = nmbrsrc::load(file.to_str().unwrap()).unwrap();
                     let number = test_values.len();
+                    log.log_time(&format!("queries loaded\tqueries={}", number));
                     let mut stats = vec![vec![0; 44]; 44];
+                    let mut hit_count = 0;
+                    let mut miss_count = 0;
                     let _: Vec<usize> = test_values.into_iter().map(|v| {
-                        let (r, e, c) = yft.predecessor_with_stats(v);
+                        let (r, e, c, m) = yft.predecessor_with_stats(v);
                         stats[e as usize][c as usize] += 1;
+                        hit_count += c - m;
+                        miss_count += m;
                         r.unwrap_or(0)
                     }).collect();
+                    log.log_time(&format!("queries processed\tnumber={}", number));
                     for e in 0..43 {
                         for c in 0..43 {
                             if stats[e][c] > 0 {
@@ -405,7 +419,10 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                             }
                         }
                     }
-                    log.log_time(&format!("queries processed\tnumber={}", number));
+                    log.print_result(format!("Hits={}\tMisses={}\tTotal={}", hit_count, miss_count, hit_count + miss_count));
+                    if args.memory {
+                        yft.print_stats(&log);
+                    }
                 } else {
                     query(&|q| yft.predecessor(q), &args, &mut log);
                 }
