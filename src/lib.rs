@@ -22,6 +22,7 @@ pub mod yft40so_fnv_small_groups;
 pub mod yft40sn_fnv;
 pub mod yft40sn_bin_fnv;
 pub mod yft40_no_level_bin;
+pub mod yft40_goup;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
@@ -222,6 +223,18 @@ mod tests {
             let yft1 = yft40_no_level_bin::YFT::new(values1.clone(), &args, &mut log);
             let yft2 = yft40_no_level_bin::YFT::new(values2.clone(), &args, &mut log);
             let yftr = yft40_no_level_bin::YFT::new(rnd_values.clone(), &args, &mut log);
+
+            for (pos, query) in queries.iter().enumerate() {
+                assert_eq!(yft1.predecessor(*query), results_1[pos]);
+                assert_eq!(yft2.predecessor(*query), results_2[pos]);
+                assert_eq!(yftr.predecessor(*query), results_r[pos]);
+            }
+        }
+
+        {
+            let yft1 = yft40_goup::YFT::new(values1.clone(), &args, &mut log);
+            let yft2 = yft40_goup::YFT::new(values2.clone(), &args, &mut log);
+            let yftr = yft40_goup::YFT::new(rnd_values.clone(), &args, &mut log);
 
             for (pos, query) in queries.iter().enumerate() {
                 assert_eq!(yft1.predecessor(*query), results_1[pos]);
