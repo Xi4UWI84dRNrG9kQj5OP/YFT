@@ -12,9 +12,6 @@ pub struct Args {
     /// Minimal height of lowest lss level
     #[structopt(short = "a", long, default_value = "10")]
     pub min_start_level: usize,
-    /// Compress the YFT. Not working with u40 Option now.
-    #[structopt(short, long)]
-    pub compress: bool,
     /// Evaluate the predecessor search steps (works with h = 23, 29)
     #[structopt(short = "d", long)]
     pub search_stats: bool,
@@ -44,7 +41,7 @@ pub struct Args {
     /// 13 = no xft, successor list, binary search
     /// 14 = no xft, binary search
     /// 15 = element array split into smaller arrays
-    /// 16 = element array split into smaller 16bit value arrays
+    /// 16 = element array split into smaller 16bit value arrays (add and delete possible)
     /// 20 = Fx hash map, leaf groups, child pointer
     /// 21 = Fx hash map, leaf groups, no child pointer, binary search input level
     /// 22 = Fx hash map, leaf groups, no child pointer, linear search input level
@@ -72,6 +69,17 @@ pub struct Args {
     /// Name of this run. Used for logging. If not set, a random number is used.
     #[structopt(short = "n", long)]
     pub  run_name: Option<String>,
+    /// Values that should be added.
+    /// works only with h = 16 and not with -d
+    /// if used with -q, queries will be answered before and after elements are added
+    /// will always be done before delete
+    #[structopt(short="o", long, parse(from_os_str))]
+    pub  add: Option<PathBuf>,
+    /// Values that should be added.
+    /// works only with h = 16 and not with -d
+    /// if used with -q, queries will be answered before and after elements are added
+    #[structopt(short="p", long, parse(from_os_str))]
+    pub  delete: Option<PathBuf>,
     /// File with predecessor queries
     #[structopt(short, long, parse(from_os_str))]
     pub  queries: Option<PathBuf>,

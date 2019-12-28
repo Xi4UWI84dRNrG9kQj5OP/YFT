@@ -40,7 +40,6 @@ mod tests {
         let args = Args {
             values: ValueSrc::Uniform { length: 0 },
             min_start_level: 10,
-            compress: false,
             search_stats: false,
             element_length_test: false,
             fixed_leaf_level: Some(8),
@@ -49,6 +48,8 @@ mod tests {
             bin_middle: 30,
             memory: false,
             run_name: None,
+            add: None,
+            delete: None,
             queries: None,
             result: false,
             store: None,
@@ -76,7 +77,7 @@ mod tests {
             10804527104, 10804527204, 10804527304, 10804527404, 10804527504, 10804527604, 10804527704, 10804527804, 10804527904, 10804528004, 10804528104, 10804528204, 10804528304, 10804528404, 10804528504, 10804528604, 10804528704, 10804528804, 10804528904, 10804529004, 10804529104, 10804529204, 10804529304, 10804529404, 10804529504, 10804529604, 10804529704, 10804529804, 10804529904, 10804530004, 10804530104, 10804530204, 10804530304, 10804530404, 10804530504, 10804530604, 10804530704, 10804530804, 100804530904, 110804531004,
             1099511627774, 1099511627775]
             .iter().map(|v: &u64| u40::from(*v)).collect();
-        let rnd_values = nmbrsrc::get_uniform_dist(32768).into_iter().map(|v| u40::from(v)).collect();
+        let mut rnd_values = nmbrsrc::get_uniform_dist(32768).into_iter().map(|v| u40::from(v)).collect();
         let rnd_queries: Vec<u40> = nmbrsrc::get_uniform_dist(32768).into_iter().map(|v| u40::from(v)).collect();
         let mut queries: Vec<u40> = vec![
             0, 1, 39,
@@ -234,12 +235,37 @@ mod tests {
         {
             let yft1 = yft40_split_small::YFT::new(values1.clone(), &args, &mut log);
             let yft2 = yft40_split_small::YFT::new(values2.clone(), &args, &mut log);
-            let yftr = yft40_split_small::YFT::new(rnd_values.clone(), &args, &mut log);
+            let mut yftr = yft40_split_small::YFT::new(rnd_values.clone(), &args, &mut log);
 
             for (pos, query) in queries.iter().enumerate() {
                 assert_eq!(yft1.predecessor(*query), results_1[pos]);
                 assert_eq!(yft2.predecessor(*query), results_2[pos]);
                 assert_eq!(yftr.predecessor(*query), results_r[pos]);
+            }
+
+//             test add and delete
+
+            for i in nmbrsrc::get_uniform_dist(32768).into_iter().map(|v| u40::from(v)) {
+                yftr.add(i);
+                debug_assert!(i == yftr.predecessor(i+u40::from(1)).unwrap());
+                rnd_values.push(i);
+            }
+            rnd_values.sort();
+            for query in queries.iter() {
+                assert_eq!(yftr.predecessor(*query), vec_search::rust_bin_search_pred(&rnd_values, *query));
+            }
+
+            for i in (0..1000).rev() {
+                let removed = rnd_values[i];
+                yftr.remove(removed);
+                let removed2 = rnd_values.remove(i);
+                debug_assert!(removed == removed2);
+            }
+//
+//            yftr.test_predecessors(rnd_values.clone());
+
+            for query in queries.iter() {
+                assert_eq!(yftr.predecessor(*query), vec_search::rust_bin_search_pred(&rnd_values, *query));
             }
         }
     }
