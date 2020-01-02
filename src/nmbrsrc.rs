@@ -168,3 +168,31 @@ pub fn load_u40_tim(path: &str) -> std::io::Result<Vec<u40>> {
     }
     Ok(values)
 }
+
+
+/// load u64 values with length of vector at start
+pub fn load_u64_tim(path: &str) -> std::io::Result<Vec<usize>> {
+    let mut input = BufReader::new(File::open(path).unwrap());
+    let mut lenv = Vec::new();
+    std::io::Read::by_ref(&mut input).take(std::mem::size_of::<usize>() as u64).read_to_end(&mut lenv)?;
+    let mut len: [u8; std::mem::size_of::<usize>()] = [0; std::mem::size_of::<usize>()];
+    for (i, b) in lenv.iter().enumerate() {
+        len[i] = *b;
+    }
+    let len: usize = usize::from_le_bytes(len);
+
+    assert!(len == (std::fs::metadata(path)?.len() as usize - std::mem::size_of::<usize>()) / std::mem::size_of::<usize>());
+
+    let mut values: Vec<usize> = Vec::with_capacity(len);
+    while values.len() != len {
+        let mut buffer = Vec::with_capacity(std::mem::size_of::<usize>());
+        std::io::Read::by_ref(&mut input).take(std::mem::size_of::<usize>() as u64).read_to_end(&mut buffer)?;
+        let mut next_value: usize = 0;
+        for i in 0..buffer.len() {
+            next_value |= (buffer[i] as usize) << (8 * i);
+        }
+
+        values.push(next_value);
+    }
+    Ok(values)
+}

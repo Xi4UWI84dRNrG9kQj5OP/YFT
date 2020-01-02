@@ -122,6 +122,9 @@ fn main() {
             ValueSrc::U40T { path } => {
                 (Vec::new(), nmbrsrc::load_u40_tim(path.to_str().unwrap()).unwrap())
             }
+            ValueSrc::U64T { path } => {
+                (nmbrsrc::load_u64_tim(path.to_str().unwrap()).unwrap(), Vec::new())
+            }
             ValueSrc::U64S { path } => {
                 (nmbrsrc::load_u64_serialized(path.to_str().unwrap()).unwrap(), Vec::new())
             }

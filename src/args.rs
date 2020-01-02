@@ -162,6 +162,11 @@ pub enum ValueSrc {
         #[structopt(parse(from_os_str))]
         path: PathBuf,
     },
+    /// A file with ordered u64 Numbers and its size at start to create the Y-Fast-Trie
+    U64T {
+        #[structopt(parse(from_os_str))]
+        path: PathBuf,
+    },
     /// A file with ordered u64 Numbers to create the Y-Fast-Trie
     U64S {
         #[structopt(parse(from_os_str))]

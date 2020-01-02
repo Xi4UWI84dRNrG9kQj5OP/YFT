@@ -141,7 +141,7 @@ impl YFT {
 
     pub fn add(&mut self, element: DataType) {
         let leaf_path = calc_path(element, 0, self.start_level);
-        //TODO könnt effizienter beim iterieren gefunden werden
+        //TODO könnte effizienter beim iterieren gefunden werden, bzw. im fall das blatt vorhanden dort ausgelesen
         let predecessor = self.predecessor(element).unwrap_or(DataType::max_value());
         let mut add_nodes = true;
         let mut do_nothing = false;
@@ -150,7 +150,7 @@ impl YFT {
             match elements.binary_search(&SmallType::from(element)) {
                 Ok(_) => {
                     // element already exists, nothing to do
-                    println!("Element {:?} already exists, nothing changed", element);
+//                    println!("Element {:?} already exists, nothing changed", element);
                     do_nothing = true;
                 }
                 Err(pos) => {
@@ -278,13 +278,13 @@ impl YFT {
                         }
                     }
                     Err(_) => { // no matching element
-                        println!("Element {:?} does not exist and can't be removed", element);
+//                        println!("Element {:?} does not exist and can't be removed", element);
                         do_nothing = true;
                     }
                 }
             }
             None => { // no matching leaf
-                println!("Element {:?} does not exist and can't be removed", element);
+//                println!("Element {:?} does not exist and can't be removed", element);
                 do_nothing = true;
             }
         }
