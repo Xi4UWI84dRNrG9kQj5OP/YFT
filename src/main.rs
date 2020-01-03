@@ -14,7 +14,6 @@ extern crate fnv;
 /// "cargo test" calls we go trough lib.rs
 /// see Args.rs for more Information about command line Arguments
 
-pub use yft64::YFT;
 use structopt::StructOpt;
 use uint::u40;
 use args::Args;
@@ -52,7 +51,7 @@ pub mod yft40sn_fnv;
 pub mod yft40sn_bin_fnv;
 pub mod yft40_split;
 pub mod yft40_split_small;
-pub mod yft64so_fnv_bin_weight;
+pub mod yft64_split_small_32;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
@@ -440,7 +439,7 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
             if args.implementation != 1 {
                 eprintln!("Hashmap Parameter is ignored in usize mod\n Use -u Parameter!");
             }
-            let yft = yft64so_fnv_bin_weight::YFT::new(get_usize_values(values), &args, &mut log);
+            let yft = yft64_split_small_32::YFT::new(get_usize_values(values), &args, &mut log);
 
             log.log_mem("initialized").log_time("initialized");
 

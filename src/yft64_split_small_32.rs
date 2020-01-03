@@ -2,21 +2,21 @@ extern crate fnv;
 
 use args::Args;
 use log::Log;
-use uint::u40;
+
 use self::fnv::FnvHashMap;
 use predecessor_set::PredecessorSet;
 
-pub type DataType = u40;
-pub type SmallType = u16;
+pub type DataType = usize;
+pub type SmallType = u32;
 
-const BIT_LENGTH: usize = 40;
-const SMALL_TYPE_LEN: usize = 16;
+const BIT_LENGTH: usize = 64;
+const SMALL_TYPE_LEN: usize = 32;
 
 /*If v is a node at a height j, then all
 the leafs descending from v will have key values
 between the quantities (i - 1)2^J + 1 and i* 2^J */
 
-///dynamic 40 bit Impl with input array stored in leafs last 16 bit only, without child pointer and binary search below xft leafs
+///dynamic 64 bit Impl with input array stored in leafs last 32 bit only, without child pointer and binary search below xft leafs
 pub struct YFT {
     //predecessor of non existing subtree vec, DataType::max_value() if None (DataType::max_value() cant't be predecessor)
     lss_top: Vec<DataType>,
@@ -36,7 +36,7 @@ impl YFT {
         if elements.len() == 0 {
             panic!("Input is empty");
         }
-        if elements.len() >= usize::from(DataType::max_value()) - 1 {
+        if elements.len() >= DataType::max_value() - 1 {
             panic!("Too many Elements in input");
         }
         let mut start_level = if let Some(start_level) = args.fixed_leaf_level {
@@ -103,14 +103,14 @@ impl YFT {
             let x_leaf_position = calc_path(*value, 0, start_level);
             if Some(x_leaf_position) != predecessor_x_leaf {
                 //create new leaf node and insert it in level 0
-                lss_leaf.insert(x_leaf_position, (predecessor, vec![SmallType::from(*value)]));
+                lss_leaf.insert(x_leaf_position, (predecessor, vec![*value as SmallType]));
                 //ensure predecessors array doesnt take to much space
                 if let Some(predecessor_x_leaf) = predecessor_x_leaf {
                     lss_leaf.get_mut(&predecessor_x_leaf).unwrap().1.shrink_to_fit();
                 }
             } else {
                 //add value to elements of existing leaf
-                lss_leaf.get_mut(&x_leaf_position).unwrap().1.push(SmallType::from(*value));
+                lss_leaf.get_mut(&x_leaf_position).unwrap().1.push(*value as SmallType);
             }
 
             //insert branch nodes
@@ -147,14 +147,14 @@ impl YFT {
         let mut do_nothing = false;
         self.lss_leaf.entry(leaf_path).and_modify(|(_predecessor, elements)| {
             //add element to existing leaf
-            match elements.binary_search(&SmallType::from(element)) {
+            match elements.binary_search(&(element as SmallType)) {
                 Ok(_) => {
                     // element already exists, nothing to do
 //                    println!("Element {:?} already exists, nothing changed", element);
                     do_nothing = true;
                 }
                 Err(pos) => {
-                    elements.insert(pos, SmallType::from(element));
+                    elements.insert(pos, element as SmallType);
                     if pos < elements.len() - 1 { // one element has just been added -> -1
                         //element is not last element -> no predecessor has to be changed
                         do_nothing = true;
@@ -163,7 +163,7 @@ impl YFT {
                 }
             }
             //add element to new leaf
-        }).or_insert((predecessor, vec![SmallType::from(element)]));
+        }).or_insert((predecessor, vec![element as SmallType]));
 
         if do_nothing {
             return;
@@ -189,7 +189,7 @@ impl YFT {
 
                 if has_left_child {
                     // case left child has been removed
-                    let right_child_path = path + DataType::from(1);
+                    let right_child_path = path + 1;
                     //something to trick the borrow checker (double mutable access to lss_branch)
                     let mut child_is_there = false;
                     self.lss_branch[i].entry(right_child_path).and_modify(|predecessor| {
@@ -205,7 +205,7 @@ impl YFT {
                     }
                 } else {
                     //case right child has been removed, predecessor must not be changed on left child
-                    if self.lss_branch[i].contains_key(&(path - DataType::from(1))) {
+                    if self.lss_branch[i].contains_key(&(path - 1)) {
                         //no other node has to be removed, cause one child exist
                         add_nodes = false;
                     }
@@ -222,7 +222,7 @@ impl YFT {
                 if has_left_child {
                     //node is left child and shall not be removed
                     //this var wil be used to create path of next leaf, if possible
-                    let right_child_path = path + DataType::from(1);
+                    let right_child_path = path + 1;
                     if self.lss_branch[i].contains_key(&(right_child_path)) {
                         self.lss_branch[i].entry(right_child_path).and_modify(|predecessor| {
                             if *predecessor == element_predecessor {
@@ -241,7 +241,7 @@ impl YFT {
 
     fn set_leaf_predecessor(&mut self, change_nodes: &mut bool, old_predecessor: DataType, new_predecessor: DataType, leaf_path: &DataType, set_leaf_predecessor: &mut bool) {
         if is_left_child(*leaf_path) {
-            self.lss_leaf.entry(*leaf_path + DataType::from(1)).and_modify(|(predecessor, _elements)| {
+            self.lss_leaf.entry(*leaf_path + 1).and_modify(|(predecessor, _elements)| {
                 debug_assert!(*predecessor == old_predecessor);
                 *predecessor = new_predecessor;
                 //if right child of parent is next child, set its predecessor
@@ -250,7 +250,7 @@ impl YFT {
                 *change_nodes = false;
             });
         } else { //case right child, predecessor must not be changed on left child
-            if self.lss_leaf.contains_key(&(*leaf_path - DataType::from(1))) {
+            if self.lss_leaf.contains_key(&(*leaf_path - 1)) {
                 //no node has to be removed, cause one child exist
                 *change_nodes = false;
             }
@@ -264,7 +264,7 @@ impl YFT {
         let mut do_nothing = false;
         match self.lss_leaf.get_mut(&leaf_path) {
             Some((predecessor, elements)) => {
-                match elements.binary_search(&SmallType::from(element)) {
+                match elements.binary_search(&(element as SmallType)) {
                     Ok(pos) => {
                         elements.remove(pos);
                         if elements.len() == 0 {
@@ -306,7 +306,7 @@ impl YFT {
         }
         self.set_leaf_predecessor(&mut remove_node, old_predecessor, new_predecessor, leaf_path, &mut set_leaf_predecessor);
         if is_left_child(*leaf_path) {
-            self.lss_leaf.entry(*leaf_path + DataType::from(1)).and_modify(|(predecessor, _elements)| {
+            self.lss_leaf.entry(*leaf_path + 1).and_modify(|(predecessor, _elements)| {
                 debug_assert!(*predecessor == old_predecessor || *predecessor == new_predecessor);
                 *predecessor = new_predecessor;
                 //if right child of parent is next child, set its predecessor
@@ -315,7 +315,7 @@ impl YFT {
                 remove_node = false;
             });
         } else { //case right child, predecessor must not be changed on left child
-            if self.lss_leaf.contains_key(&(*leaf_path - DataType::from(1))) {
+            if self.lss_leaf.contains_key(&(*leaf_path - 1)) {
                 //no node has to be removed, cause one child exist
                 remove_node = false;
             }
@@ -327,7 +327,7 @@ impl YFT {
                 self.lss_branch[i].remove(&path);
                 if is_left_child(path) {
                     // case left child has been removed
-                    let right_child_path = path + DataType::from(1);
+                    let right_child_path = path + 1;
                     //something to trick the borrow checker (double mutable access to lss_branch)
                     let mut child_is_there = false;
                     self.lss_branch[i].entry(right_child_path).and_modify(|predecessor| {
@@ -343,7 +343,7 @@ impl YFT {
                     }
                 } else {
                     //case right child has been removed, predecessor must not be changed on left child
-                    if self.lss_branch[i].contains_key(&(path - DataType::from(1))) {
+                    if self.lss_branch[i].contains_key(&(path - 1)) {
                         //no other node has to be removed, cause one child exist
                         remove_node = false;
                     }
@@ -352,7 +352,7 @@ impl YFT {
                 if is_left_child(path) {
                     //node is left child and shall not be removed
                     //this var wil be used to create path of next leaf, if possible
-                    let right_child_path = path + DataType::from(1);
+                    let right_child_path = path + 1;
                     if self.lss_branch[i].contains_key(&(right_child_path)) {
                         self.lss_branch[i].entry(right_child_path).and_modify(|predecessor| {
                             if *predecessor == old_predecessor {
@@ -382,7 +382,7 @@ impl YFT {
             let len = self.lss_branch.len();
             let mut path = calc_path(element, len, self.start_level);
             while path != calc_path(DataType::max_value(), len, self.start_level) {
-                path += DataType::from(1);
+                path += 1;
                 if self.lss_branch[len - 1].contains_key(&path) {
                     self.lss_branch[len - 1].entry(path).and_modify(|predecessor| {
                         if *predecessor == old_predecessor {
@@ -435,7 +435,7 @@ impl YFT {
                     debug_assert!(self.lss_branch[j].contains_key(&next_leaf_path));
                 } else {
                     // right child -> append 1
-                    next_leaf_path = (next_leaf_path << 1) + DataType::from(1);
+                    next_leaf_path = (next_leaf_path << 1) + 1;
                     debug_assert!(self.lss_branch[j].contains_key(&next_leaf_path));
                 }
                 debug_assert!(self.lss_branch[j].contains_key(&next_leaf_path));
@@ -449,7 +449,7 @@ impl YFT {
             if self.lss_leaf.contains_key(&(next_leaf_path << 1)) {
                 next_leaf_path = next_leaf_path << 1;
             } else {
-                next_leaf_path = (next_leaf_path << 1) + DataType::from(1);
+                next_leaf_path = (next_leaf_path << 1) + 1;
                 debug_assert!(self.lss_leaf.contains_key(&next_leaf_path));
             }
             self.lss_leaf.entry(next_leaf_path).and_modify(|(predecessor, _elements)| {
@@ -558,11 +558,11 @@ impl YFT {
     }
 
     fn lss_top_position(value: &DataType, lss_top_height: usize) -> usize {
-        usize::from(*value) >> (BIT_LENGTH - lss_top_height)
+        *value >> (BIT_LENGTH - lss_top_height)
     }
 
     pub fn contains(&self, query: DataType) -> bool {
-        self.predecessor(query + 1 as u32) == Some(query)
+        self.predecessor(query + 1) == Some(query)
     }
 
     //query may not belong to existing node
@@ -579,7 +579,7 @@ impl YFT {
 
             if search_position == 0 {
                 //leaf level
-                match self.lss_leaf.get(&calc_path(query, search_position, self.start_level)) {
+                match self.lss_leaf.get(&calc_path(query, 0, self.start_level)) {
                     Some((predecessor, elements)) => {
                         return self.predecessor_from_array(query, predecessor, elements);
                     }
@@ -649,13 +649,13 @@ impl YFT {
     }
 
     fn predecessor_from_array(&self, query: DataType, predecessor: &DataType, elements: &Vec<SmallType>) -> Option<DataType> {
-        let pos = match elements.binary_search(&SmallType::from(query)) {
+        let pos = match elements.binary_search(&(query as SmallType)) {
             Ok(pos) => pos,
             Err(pos) => pos
         };
         return if pos == 0 {
             //test next value greater than search one
-            debug_assert!(if let Some(successor) = elements.get(usize::from(pos)) { successor >= &SmallType::from(query) } else { true });
+            debug_assert!(if let Some(successor) = elements.get(pos) { successor >= &(query as SmallType) } else { true });
             if *predecessor == DataType::max_value() {
                 None
             } else {
@@ -665,9 +665,9 @@ impl YFT {
             }
         } else {
             //test next value greater than search one
-            debug_assert!(usize::from(pos) >= elements.len() || if let Some(successor) = elements.get(usize::from(pos)) { successor >= &SmallType::from(query) } else { true });
+            debug_assert!(pos >= elements.len() || if let Some(successor) = elements.get(pos) { successor >= &(query as SmallType) } else { true });
             //test value smaller than searched one
-            debug_assert!(if let Some(predecessor) = elements.get(usize::from(pos - 1)) { predecessor < &SmallType::from(query) } else { true });
+            debug_assert!(if let Some(predecessor) = elements.get(usize::from(pos - 1)) { predecessor < &(query as SmallType) } else { true });
             //get prefix via query and append it to result
             Some(extend_suffix(query, unsafe { *elements.get_unchecked(pos - 1) }))
         };
@@ -750,7 +750,7 @@ impl YFT {
 } //impl YFT
 
 fn extend_suffix(preffix_source: DataType, suffix: SmallType) -> DataType {
-    DataType::from((usize::from(suffix)) | ((usize::from(preffix_source) >> SMALL_TYPE_LEN) << SMALL_TYPE_LEN))
+    (suffix as usize | (usize::from(preffix_source) >> SMALL_TYPE_LEN) << SMALL_TYPE_LEN)
 }
 
 fn calc_path(position: DataType, lss_level: usize, start_level: usize) -> DataType {
