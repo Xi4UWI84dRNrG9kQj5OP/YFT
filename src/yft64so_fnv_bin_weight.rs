@@ -8,7 +8,7 @@ use predecessor_set::PredecessorSet;
 
 pub type DataType = usize;
 
-const BIT_LENGTH: usize = 64; // TODO make this var! einfach (wenig) speicher sparen
+const BIT_LENGTH: usize = 64;
 
 /*If v is a node at a height j, then all
 the leafs descending from v will have key values

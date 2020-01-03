@@ -77,8 +77,8 @@ mod tests {
             10804527104, 10804527204, 10804527304, 10804527404, 10804527504, 10804527604, 10804527704, 10804527804, 10804527904, 10804528004, 10804528104, 10804528204, 10804528304, 10804528404, 10804528504, 10804528604, 10804528704, 10804528804, 10804528904, 10804529004, 10804529104, 10804529204, 10804529304, 10804529404, 10804529504, 10804529604, 10804529704, 10804529804, 10804529904, 10804530004, 10804530104, 10804530204, 10804530304, 10804530404, 10804530504, 10804530604, 10804530704, 10804530804, 100804530904, 110804531004,
             1099511627774, 1099511627775]
             .iter().map(|v: &u64| u40::from(*v)).collect();
-        let mut rnd_values = nmbrsrc::get_uniform_dist(32768).into_iter().map(|v| u40::from(v)).collect();
-        let rnd_queries: Vec<u40> = nmbrsrc::get_uniform_dist(32768).into_iter().map(|v| u40::from(v)).collect();
+        let mut rnd_values = nmbrsrc::get_uniform_dist(32768);
+        let rnd_queries: Vec<u40> = nmbrsrc::get_uniform_dist(32768);
         let mut queries: Vec<u40> = vec![
             0, 1, 39,
             40, 41, 256, 257, 701, 702, 739, 740,
@@ -245,7 +245,7 @@ mod tests {
 
 //             test add and delete
 
-            for i in nmbrsrc::get_uniform_dist(32768).into_iter().map(|v| u40::from(v)) {
+            for i in nmbrsrc::get_uniform_dist(32768) {
                 yftr.add(i);
                 debug_assert!(i == yftr.predecessor(i+u40::from(1)).unwrap());
                 rnd_values.push(i);

@@ -67,8 +67,8 @@ pub fn get_power_law_dist(length: usize, n: f64) -> Vec<usize> {
 
 /// length = number of elements in result
 /// result will be ordered
-pub fn get_uniform_dist(length: usize) -> Vec<usize> {
-    let mut vec: Vec<usize> = rand::thread_rng().sample_iter(Uniform::from(0..1099511627775)).take(length).collect();
+pub fn get_uniform_dist(length: usize) -> Vec<u40> {
+    let mut vec: Vec<u40> = rand::thread_rng().sample_iter(Uniform::from(0..1099511627775)).map(|v: usize| u40::from(v)).take(length).collect();
     vec.sort();
     vec
 }

@@ -97,7 +97,7 @@ fn main() {
             }
             ValueSrc::Uniform { length } => {
                 if args.u40 {
-                    (Vec::new(), nmbrsrc::get_uniform_dist(*length).into_iter().map(|v| u40::from(v)).collect())
+                    (Vec::new(), nmbrsrc::get_uniform_dist(*length))
                 } else {
                     (nmbrsrc::get_uniform_dist_restricted(*length, 0, 18446744073709551615), Vec::new())
                 }
