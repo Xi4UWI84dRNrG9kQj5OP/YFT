@@ -51,6 +51,7 @@ pub mod yft40sn_fnv;
 pub mod yft40sn_bin_fnv;
 pub mod yft40_split;
 pub mod yft40_split_small;
+pub mod yft40_split_small_leaf_search;
 pub mod yft64_split_small_32;
 pub mod predecessor_set;
 pub mod nmbrsrc;
@@ -382,45 +383,82 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
                     13 => testyft40!(yft40_no_level_bin_suc::YFT; values),
                     14 => testyft40!(yft40_no_level_bin::YFT; values),
                     15 => testyft40!(yft40_split::YFT; values),
-                    16 =>
-                        {
-                            let mut yft = yft40_split_small::YFT::new(values, &args, &mut log);
+                    16 => {
+                        let mut yft = yft40_split_small::YFT::new(values, &args, &mut log);
 
-                            log.log_mem("initialized").log_time("initialized");
+                        log.log_mem("initialized").log_time("initialized");
+
+                        query(&|q| yft.predecessor(q), &args, &mut log);
+                        if args.memory {
+                            yft.print_stats(&log);
+                        }
+
+                        if let Some(ref file) = args.add {
+                            let new_values: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
+                            log.log_mem("Values to add loaded").log_time("Values to add loaded");
+                            for value in new_values {
+                                yft.add(value);
+                            }
+                            log.log_mem("Values added").log_time("Values added");
 
                             query(&|q| yft.predecessor(q), &args, &mut log);
                             if args.memory {
                                 yft.print_stats(&log);
                             }
+                        }
 
-                            if let Some(ref file) = args.add {
-                                let new_values: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
-                                log.log_mem("Values to add loaded").log_time("Values to add loaded");
-                                for value in new_values {
-                                    yft.add(value);
-                                }
-                                log.log_mem("Values added").log_time("Values added");
-
-                                query(&|q| yft.predecessor(q), &args, &mut log);
-                                if args.memory {
-                                    yft.print_stats(&log);
-                                }
+                        if let Some(ref file) = args.delete {
+                            let values_to_remove: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
+                            log.log_mem("Values to remove loaded").log_time("Values to remove loaded");
+                            for value in values_to_remove {
+                                yft.remove(value);
                             }
+                            log.log_mem("Values removed").log_time("Values removed");
 
-                            if let Some(ref file) = args.delete {
-                                let values_to_remove: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
-                                log.log_mem("Values to remove loaded").log_time("Values to remove loaded");
-                                for value in values_to_remove {
-                                    yft.remove(value);
-                                }
-                                log.log_mem("Values removed").log_time("Values removed");
-
-                                query(&|q| yft.predecessor(q), &args, &mut log);
-                                if args.memory {
-                                    yft.print_stats(&log);
-                                }
+                            query(&|q| yft.predecessor(q), &args, &mut log);
+                            if args.memory {
+                                yft.print_stats(&log);
                             }
                         }
+                    }
+                    17 => {
+                        let mut yft = yft40_split_small_leaf_search::YFT::new(values, &args, &mut log);
+
+                        log.log_mem("initialized").log_time("initialized");
+
+                        query(&|q| yft.predecessor(q), &args, &mut log);
+                        if args.memory {
+                            yft.print_stats(&log);
+                        }
+
+                        if let Some(ref file) = args.add {
+                            let new_values: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
+                            log.log_mem("Values to add loaded").log_time("Values to add loaded");
+                            for value in new_values {
+                                yft.add(value);
+                            }
+                            log.log_mem("Values added").log_time("Values added");
+
+                            query(&|q| yft.predecessor(q), &args, &mut log);
+                            if args.memory {
+                                yft.print_stats(&log);
+                            }
+                        }
+
+                        if let Some(ref file) = args.delete {
+                            let values_to_remove: Vec<u40> = nmbrsrc::load(file.to_str().unwrap()).unwrap().into_iter().map(|v| u40::from(v)).collect();
+                            log.log_mem("Values to remove loaded").log_time("Values to remove loaded");
+                            for value in values_to_remove {
+                                yft.remove(value);
+                            }
+                            log.log_mem("Values removed").log_time("Values removed");
+
+                            query(&|q| yft.predecessor(q), &args, &mut log);
+                            if args.memory {
+                                yft.print_stats(&log);
+                            }
+                        }
+                    }
                     20 => testyft40!(yft40bo_fx_hash::YFT; values),
                     21 => testyft40!(yft40so_fx_hash_binsearch::YFT; values),
                     22 => testyft40!(yft40so_fx_hash_linsearch::YFT; values),

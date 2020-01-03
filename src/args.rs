@@ -42,6 +42,7 @@ pub struct Args {
     /// 14 = no xft, binary search
     /// 15 = element array split into smaller arrays
     /// 16 = element array split into smaller 16bit value arrays (add and delete possible)
+    /// 17 = element array split into smaller 16bit value arrays (add and delete possible), search in leaf level fist
     /// 20 = Fx hash map, leaf groups, child pointer
     /// 21 = Fx hash map, leaf groups, no child pointer, binary search input level
     /// 22 = Fx hash map, leaf groups, no child pointer, linear search input level
