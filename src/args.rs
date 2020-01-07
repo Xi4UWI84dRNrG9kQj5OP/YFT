@@ -71,13 +71,13 @@ pub struct Args {
     #[structopt(short = "n", long)]
     pub  run_name: Option<String>,
     /// Values that should be added.
-    /// works only with h = 16 and not with -d
+    /// works only with h = 16, 17 and 101 and not with -d
     /// if used with -q, queries will be answered before and after elements are added
     /// will always be done before delete
     #[structopt(short="o", long, parse(from_os_str))]
     pub  add: Option<PathBuf>,
     /// Values that should be added.
-    /// works only with h = 16 and not with -d
+    /// works only with h = 16, 17 and 101 and not with -d
     /// if used with -q, queries will be answered before and after elements are added
     #[structopt(short="p", long, parse(from_os_str))]
     pub  delete: Option<PathBuf>,

@@ -247,7 +247,7 @@ mod tests {
 
             for i in nmbrsrc::get_uniform_dist(32768) {
                 yftr.add(i);
-                debug_assert!(i == yftr.predecessor(i+u40::from(1)).unwrap());
+                debug_assert!(i == yftr.predecessor(i + u40::from(1)).unwrap());
                 rnd_values.push(i);
             }
             rnd_values.sort();

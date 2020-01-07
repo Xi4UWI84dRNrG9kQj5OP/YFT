@@ -186,15 +186,34 @@ fn run_yft(args: &Args, mut log: &mut log::Log, values: (Vec<usize>, Vec<u40>)) 
         } else if args.implementation == 101 { //btree
             // performance is so bad, that possible improvement with u40 won't help
             let values = get_usize_values(values);
-            let set = &(&values).into_iter().fold(BTreeSet::new(), |mut set, value| {
-                set.insert(value.clone());
-                set
-            });
             //print stats
             log.print_result(format!("level=-1\telements={}", values.len()));
+            let mut set = BTreeSet::from_iter(values.into_iter());
             log.log_mem("initialized").log_time("initialized");
 
-            query(&|q| vec_search::btree_search_pred(set, q), &args, &mut log);
+            query(&|q| vec_search::btree_search_pred(&set, q), &args, &mut log);
+
+            if let Some(ref file) = args.add {
+                let new_values: Vec<usize> = nmbrsrc::load(file.to_str().unwrap()).unwrap();
+                log.log_mem("Values to add loaded").log_time("Values to add loaded");
+                for value in new_values {
+                    set.insert(value);
+                }
+                log.log_mem("Values added").log_time("Values added");
+
+                query(&|q| vec_search::btree_search_pred(&set, q), &args, &mut log);
+            }
+
+            if let Some(ref file) = args.delete {
+                let values_to_remove: Vec<usize> = nmbrsrc::load(file.to_str().unwrap()).unwrap();
+                log.log_mem("Values to remove loaded").log_time("Values to remove loaded");
+                for value in values_to_remove {
+                    set.remove(&value);
+                }
+                log.log_mem("Values removed").log_time("Values removed");
+
+                query(&|q| vec_search::btree_search_pred(&set, q), &args, &mut log);
+            }
         } else if args.implementation == 102 { //mixed binary linear search
             let values = get_u40_values(values);
 
