@@ -11,18 +11,37 @@ extern crate stats_alloc;
 /// It contains some correctness tests for different yft implementations
 /// see main.rs for "cargo run"
 
+pub mod yft64;
 pub mod yft40_rust_hash;
 pub mod yft40sn_fx_hash;
-pub mod yft40_fnv_hash;
+pub mod yft40bn_fx_hash;
+pub mod yft40bo_fx_hash;
+pub mod yft40so_fx_hash_binsearch;
 pub mod yft40so_fnv_binsearch;
-pub mod yft40so_rust_hash_binsearch;
-pub mod yft40so_boomphf_binsearch;
 pub mod yft40so_fnv_bin_weight;
+pub mod yft40so_rust_hash_binsearch;
+pub mod yft40so_im_binsearch;
+pub mod yft40so_boomphf_binsearch;
+pub mod yft40so_boomphf_para_binsearch;
+pub mod yft40so_fx_hash_linsearch;
+pub mod yft40so_fx_hash_small_groups;
+pub mod yft40_hash_brown;
+pub mod yft40_im_hash;
+pub mod yft40_boomphf_hash;
+pub mod yft40_boomphf_hash_para;
+pub mod yft40_fx_hash_bottom_up_construction;
+pub mod yft40_fx_hash_capacity;
+pub mod yft40_no_level_suc;
+pub mod yft40_no_level_bin_suc;
+pub mod yft40_no_level_bin;
+pub mod yft40_fnv_hash;
 pub mod yft40so_fnv_small_groups;
 pub mod yft40sn_fnv;
 pub mod yft40sn_bin_fnv;
-pub mod yft40_no_level_bin;
+pub mod yft40_split;
 pub mod yft40_split_small;
+pub mod yft40_split_small_leaf_search;
+pub mod yft64_split_small_32;
 pub mod predecessor_set;
 pub mod nmbrsrc;
 pub mod log;
@@ -233,9 +252,9 @@ mod tests {
         }
 
         {
-            let yft1 = yft40_split_small::YFT::new(values1.clone(), &args, &mut log);
-            let yft2 = yft40_split_small::YFT::new(values2.clone(), &args, &mut log);
-            let mut yftr = yft40_split_small::YFT::new(rnd_values.clone(), &args, &mut log);
+            let yft1 = yft40_split_small_leaf_search::YFT::new(values1.clone(), &args, &mut log);
+            let yft2 = yft40_split_small_leaf_search::YFT::new(values2.clone(), &args, &mut log);
+            let mut yftr = yft40_split_small_leaf_search::YFT::new(rnd_values.clone(), &args, &mut log);
 
             for (pos, query) in queries.iter().enumerate() {
                 assert_eq!(yft1.predecessor(*query), results_1[pos]);
