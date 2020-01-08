@@ -562,7 +562,10 @@ impl YFT {
     }
 
     pub fn contains(&self, query: DataType) -> bool {
-        self.predecessor(query + 1 as u32) == Some(query)
+        match self.lss_leaf.get(&calc_path(query, 0, self.start_level)){
+            None => false,
+            Some(&(_, ref values))=> values.binary_search(&SmallType::from(query)).is_ok() ,
+        }
     }
 
     //query may not belong to existing node
